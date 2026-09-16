@@ -1,0 +1,40 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Nqphp\Core\Kernel\Kernel;
+
+$projectDir = dirname(__DIR__);
+$kernel = new Kernel($projectDir);
+
+$argv = array_slice($argv, 1);
+$command = $argv[0] ?? 'list';
+
+switch ($command) {
+    case 'list':
+        echo "nqphp console\n";
+        echo "  list            Show this help\n";
+        echo "  routes:list     List all discovered routes\n";
+        break;
+    case 'routes:list':
+        $routes = $kernel->getRouteCollection();
+        $maxName = 0;
+        $rows = [];
+        foreach ($routes->all() as $name => $route) {
+            $maxName = max($maxName, \strlen($name));
+            $rows[] = [$name, $route->getPath(), implode('|', $route->getMethods() ?: ['ANY'])];
+        }
+        \usort($rows, fn($a, $b) => $a[0] <=> $b[0]);
+        printf("%-{$maxName}s  %-30s  %s\n", 'NAME', 'PATH', 'METHODS');
+        foreach ($rows as [$n, $p, $m]) {
+            printf("%-{$maxName}s  %-30s  %s\n", $n, $p, $m);
+        }
+        break;
+    default:
+        fwrite(STDERR, "Unknown command: $command\n");
+        fwrite(STDERR, "Run 'bin/console list' for usage.\n");
+        exit(1);
+}
