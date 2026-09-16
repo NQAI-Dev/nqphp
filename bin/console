@@ -5,36 +5,65 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use Nqphp\Core\Console\CommandDiscoverer;
 use Nqphp\Core\Kernel\Kernel;
+use Symfony\Component\Console\Application;
 
-$projectDir = dirname(__DIR__);
-$kernel = new Kernel($projectDir);
+/**
+ * nqphp CLI entry point.
+ *
+ * Phase 2: routes the framework to a real Symfony Console Application.
+ * Commands are discovered from `#[AsCommand]` attributes across:
+ *   - src/Feature/*/Command/*.php   (project commands)
+ *   - src/Core/Command/*.php        (framework commands, future)
+ *
+ * The legacy hand-rolled `routes:list` is preserved as a built-in
+ * command so CI can still validate the route surface without registering
+ * a feature command for it.
+ */
+final class RoutesListCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly Kernel $kernel)
+    {
+        parent::__construct('routes:list', 'List all routes discovered from #[Controller]+#[Route] attributes.');
+    }
 
-$argv = array_slice($argv, 1);
-$command = $argv[0] ?? 'list';
-
-switch ($command) {
-    case 'list':
-        echo "nqphp console\n";
-        echo "  list            Show this help\n";
-        echo "  routes:list     List all discovered routes\n";
-        break;
-    case 'routes:list':
-        $routes = $kernel->getRouteCollection();
-        $maxName = 0;
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $routes = $this->kernel->getRouteCollection();
         $rows = [];
+        $maxName = 0;
         foreach ($routes->all() as $name => $route) {
             $maxName = max($maxName, \strlen($name));
             $rows[] = [$name, $route->getPath(), implode('|', $route->getMethods() ?: ['ANY'])];
         }
         \usort($rows, fn($a, $b) => $a[0] <=> $b[0]);
-        printf("%-{$maxName}s  %-30s  %s\n", 'NAME', 'PATH', 'METHODS');
-        foreach ($rows as [$n, $p, $m]) {
-            printf("%-{$maxName}s  %-30s  %s\n", $n, $p, $m);
+
+        $output->writeln('<info>Discovered routes</info>');
+        if (\count($rows) === 0) {
+            $output->writeln('  <comment>(no routes)</comment>');
+            return self::SUCCESS;
         }
-        break;
-    default:
-        fwrite(STDERR, "Unknown command: $command\n");
-        fwrite(STDERR, "Run 'bin/console list' for usage.\n");
-        exit(1);
+        $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-30s  %s', 'NAME', 'PATH', 'METHODS'));
+        foreach ($rows as [$n, $p, $m]) {
+            $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-30s  %s', $n, $p, $m));
+        }
+        return self::SUCCESS;
+    }
 }
+
+$projectDir = dirname(__DIR__);
+$kernel = new Kernel($projectDir);
+
+$discoverer = new CommandDiscoverer([
+    $projectDir . '/src/Feature',
+    $projectDir . '/src/Core',
+]);
+
+$app = new Application('nqphp', '0.2.0-dev');
+$app->add(new RoutesListCommand($kernel));
+foreach ($discoverer->discover() as $command) {
+    $app->add($command);
+}
+$app->setDefaultCommand('list', false);
+$app->run();

@@ -3,11 +3,13 @@
 > Modular monolith PHP framework. Symfony components under the hood.
 > Vertical Slice Architecture. JS modules per controller.
 
-## Status: pre-alpha Phase 1
+## Status: pre-alpha Phase 2
 
-Phase 1 ships the minimum end-to-end pipeline: PHP 8.4+, auto-discovery
-of `#[Controller] + #[Route]` attributes, HTTP kernel, front controller,
-and a CLI for `routes:list`. One Hello Feature demonstrates the pattern.
+Phase 1 shipped the minimum HTTP pipeline: `#[Controller] + #[Route]`
+auto-discovery, HTTP kernel, front controller, `bin/console routes:list`.
+Phase 2 adds CLI command auto-discovery via `#[AsCommand]` — commands in
+`src/Feature/*/Command/` and `src/Core/Command/` are registered
+automatically by `bin/console`, no hand-wiring needed.
 
 ## Architecture decisions
 
@@ -39,17 +41,23 @@ bin/console routes:list
 bin/console list
 ```
 
-## Hello Feature (current Phase 1 deliverable)
+## Hello Feature (current deliverable)
 
 ```
 GET  /                HTML: <h1>Hello World</h1>
 GET  /json            JSON: {"hello":"world"}
 GET  /json/{name}     JSON: {"hello":"{name}"}
+
+bin/console hello:greet [name]   Greets the world (or `name`). alias: hi
+bin/console routes:list          Lists all auto-discovered HTTP routes.
 ```
 
-The Hello feature lives at `src/Feature/Hello/Controller/HelloController.php`
-and demonstrates `#[Controller]` + `#[Route]` + JSON/HTML response helpers
-from `Nqphp\Core\Controller\AbstractController`.
+The HTTP slice lives at `src/Feature/Hello/Controller/HelloController.php`
+and demonstrates `#[Controller]` + `#[Route]` + JSON/HTML response helpers.
+
+The CLI slice lives at `src/Feature/Hello/Command/HelloCommand.php` and
+demonstrates `#[AsCommand]` + Symfony Console. Commands are picked up by
+`Nqphp\Core\Console\CommandDiscoverer` at boot.
 
 ## Phase 2 plan
 
@@ -57,7 +65,7 @@ from `Nqphp\Core\Controller\AbstractController`.
 * Middleware pipeline (`#[Middleware]` attribute or service-tag).
 * `#[Entity]` attribute + Doctrine bridge.
 * `#[Schedule]` cron + Symfony Scheduler integration.
-* `#[AsCommand]` CLI command auto-discovery.
+* **✅ `#[AsCommand]` CLI command auto-discovery** (shipped).
 * JS-module runtime helper (`csrf()`, `fetchJson()`).
 * `bin/dev` orchestration script.
 
