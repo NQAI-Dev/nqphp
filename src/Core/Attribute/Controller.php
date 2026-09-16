@@ -8,7 +8,7 @@ namespace Nqphp\Core\Attribute;
  * Mark a class as a controller and optionally provide a route prefix.
  *
  * Controllers are auto-discovered by the Kernel when placed in any
- * src/Feature/*/Controller/ directory. The `prefix` argument is
+ * src/Feature/{Name}/Controller/ directory. The `prefix` argument is
  * prepended to every #[Route] in the class, useful for grouping routes
  * (e.g. #[Controller('/admin')] for admin/* routes).
  *

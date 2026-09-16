@@ -10,8 +10,8 @@ namespace Nqphp\Core\Attribute;
  *
  * Commands are auto-discovered by Nqphp\Core\Console\CommandDiscoverer
  * from any class placed in:
- *   - src/Feature/*/Command/*.php       (feature-scoped commands)
- *   - src/Core/Command/*.php            (framework commands)
+ *   - src/Feature/{Name}/Command/{File}.php   (feature-scoped commands)
+ *   - src/Core/Command/{File}.php             (framework commands)
  *
  * The class must extend Symfony\Component\Console\Command\Command.
  *

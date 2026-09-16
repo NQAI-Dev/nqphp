@@ -12,7 +12,7 @@ use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Auto-discover routes from #[Controller] + #[Route] attributes on
- * classes in src/Feature/*/Controller/.
+ * classes in src/Feature/{Name}/Controller/.
  *
  * The implementation is a thin wrapper around Symfony's built-in
  * attribute loader — we just point it at the Feature/ subdirectories

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Kernel;
 
+use Nqphp\Core\Js\JsModuleServer;
 use Nqphp\Core\Routing\Router;
+use Nqphp\Core\Security\CsrfTokenManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -16,8 +18,8 @@ use Symfony\Component\Routing\RequestContext;
  * Minimal HTTP kernel.
  *
  * Phase 1: route resolution + dispatch to controller method.
- * Phase 2+ (planned): middleware pipeline, container-managed services,
- *   per-feature config autoloading.
+ * Phase 2: framework-internal `/_nqphp/...` namespace (JS modules,
+ *   CSRF cookie + enforcement), per-feature config autoloading.
  *
  * The kernel is intentionally tiny — almost all of the heavy lifting
  * delegates to Symfony components (Routing, HttpFoundation, HttpKernel).
@@ -31,16 +33,44 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Routing\Router */
     private $router;
 
-    public function __construct(string $projectDir)
-    {
+    private ?CsrfTokenManager $csrf;
+    private ?JsModuleServer $js;
+
+    public function __construct(
+        string $projectDir,
+        ?CsrfTokenManager $csrf = null,
+        ?JsModuleServer $js = null,
+    ) {
         $this->projectDir = $projectDir;
         $this->router = new Router([
             $projectDir . '/src/Feature',
         ]);
+        $this->csrf = $csrf;
+        $this->js = $js;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
     {
+        // Framework-internal namespace: JS modules + future framework
+        // endpoints. Resolved before user routes so feature code never
+        // shadows the runtime.
+        if ($this->js !== null && str_starts_with($request->getPathInfo(), JsModuleServer::urlPrefix())) {
+            $relative = substr($request->getPathInfo(), strlen(JsModuleServer::urlPrefix()));
+            $response = $this->js->serve($relative);
+            if ($response !== null) {
+                return $this->withCsrfCookie($request, $response);
+            }
+            return new Response('Not Found', 404);
+        }
+
+        // Enforce CSRF on state-changing user requests before dispatch.
+        if ($this->csrf !== null && !$this->csrf->isValid($request)) {
+            return $this->withCsrfCookie(
+                $request,
+                new Response('CSRF token missing or invalid', 403, ['content-type' => 'text/plain']),
+            );
+        }
+
         $routes = $this->router->discover();
         $context = (new RequestContext())->fromRequest($request);
         $matcher = new UrlMatcher($routes, $context);
@@ -48,17 +78,17 @@ final class Kernel implements HttpKernelInterface
         try {
             $params = $matcher->match($request->getPathInfo());
         } catch (ResourceNotFoundException $e) {
-            return new Response('Not Found', 404);
+            return $this->withCsrfCookie($request, new Response('Not Found', 404));
         }
 
         [$class, $method] = explode('::', $params['_controller'], 2);
         if (!class_exists($class)) {
-            return new Response(sprintf('Class %s not found', $class), 500);
+            return $this->withCsrfCookie($request, new Response(sprintf('Class %s not found', $class), 500));
         }
 
         $instance = new $class();
         if (!method_exists($instance, $method)) {
-            return new Response(sprintf('Method %s::%s not found', $class, $method), 500);
+            return $this->withCsrfCookie($request, new Response(sprintf('Method %s::%s not found', $class, $method), 500));
         }
 
         // Strip our private _controller / _method entries before invoking.
@@ -69,9 +99,27 @@ final class Kernel implements HttpKernelInterface
         $result = $reflection->invokeArgs($instance, $args);
 
         if ($result instanceof Response) {
-            return $result;
+            return $this->withCsrfCookie($request, $result);
         }
-        return new Response((string) ($result ?? ''), 200, ['content-type' => 'text/plain']);
+        return $this->withCsrfCookie($request, new Response((string) ($result ?? ''), 200, ['content-type' => 'text/plain']));
+    }
+
+    /**
+     * Attach the CSRF cookie to a response if the framework has a
+     * CsrfTokenManager wired up. Idempotent: if the cookie is already
+     * present we don't issue a new one — the existing token stays put.
+     */
+    private function withCsrfCookie(Request $request, Response $response): Response
+    {
+        if ($this->csrf === null) {
+            return $response;
+        }
+        $existing = $request->cookies->get(CsrfTokenManager::COOKIE_NAME);
+        if (is_string($existing) && $existing !== '') {
+            return $response;
+        }
+        $response->headers->setCookie($this->csrf->buildCookie($request));
+        return $response;
     }
 
     /**
@@ -108,5 +156,15 @@ final class Kernel implements HttpKernelInterface
     public function getRouteCollection(): \Symfony\Component\Routing\RouteCollection
     {
         return $this->router->discover();
+    }
+
+    public function getCsrf(): ?CsrfTokenManager
+    {
+        return $this->csrf;
+    }
+
+    public function getJs(): ?JsModuleServer
+    {
+        return $this->js;
     }
 }

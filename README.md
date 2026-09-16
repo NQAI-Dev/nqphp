@@ -8,15 +8,25 @@
 Phase 1 shipped the minimum HTTP pipeline: `#[Controller] + #[Route]`
 auto-discovery, HTTP kernel, front controller, `bin/console routes:list`.
 Phase 2 adds CLI command auto-discovery via `#[AsCommand]` — commands in
-`src/Feature/*/Command/` and `src/Core/Command/` are registered
+`src/Feature/{Name}/Command/` and `src/Core/Command/` are registered
 automatically by `bin/console`, no hand-wiring needed.
+
+Phase 2 also ships the JS runtime helper: a framework-bundled
+`nqphp-runtime.js` exposing `csrf()` and `fetchJson()`, served at
+`/_nqphp/js/nqphp-runtime.js`. Per-feature modules under
+`src/Feature/{Name}/Resources/client.js` are served at
+`/_nqphp/js/{Name}/client.js`. State-changing requests are guarded by
+double-submit-cookie CSRF (`X-CSRF-Token` header must equal the
+`nqphp_csrf` cookie).
 
 ## Architecture decisions
 
 * **Vertical Slice Architecture.** Each feature is a directory under
   `src/Feature/{Name}/` containing its own `Controller/`, `Entity/`,
-  `Job/`, `Command/`, and `config/services.yaml`. A feature is the
-  unit of isolation and (eventually) extraction.
+  `Job/`, `Command/`, `Resources/`, and `config/services.yaml`. A feature
+  is the unit of isolation and (eventually) extraction. Public JavaScript
+  for the feature lives under `Resources/` and is auto-served as ES
+  modules at `/_nqphp/js/{Name}/{file}.js`.
 * **Symfony components as building blocks.** `symfony/routing`,
   `symfony/http-kernel`, `symfony/console`, `symfony/dependency-injection`.
   Not `framework-bundle` — too opinionated. We glue components together.
@@ -66,8 +76,37 @@ demonstrates `#[AsCommand]` + Symfony Console. Commands are picked up by
 * `#[Entity]` attribute + Doctrine bridge.
 * `#[Schedule]` cron + Symfony Scheduler integration.
 * **✅ `#[AsCommand]` CLI command auto-discovery** (shipped).
-* JS-module runtime helper (`csrf()`, `fetchJson()`).
+* **✅ JS-module runtime helper** (`csrf()`, `fetchJson()`, `loadModule()`)
+  — double-submit-cookie CSRF, per-feature modules under
+  `src/Feature/{Name}/Resources/`, served at `/_nqphp/js/{Name}/{file}.js`.
 * `bin/dev` orchestration script.
+
+### Using the JS runtime from a feature
+
+From any controller's `render()` body, drop the framework runtime as a
+module and (optionally) your feature's own module:
+
+```html
+<script type="module" src="/_nqphp/js/nqphp-runtime.js"></script>
+<script type="module" src="/_nqphp/js/Hello/client.js"></script>
+```
+
+In your feature's `client.js`:
+
+```js
+import { csrf, fetchJson } from '/_nqphp/js/nqphp-runtime.js';
+
+const data = await fetchJson('/api/save', {
+  method: 'POST',
+  json: { hello: 'world' },
+});
+// `fetchJson` automatically attaches `X-CSRF-Token: <csrf()>`
+// for POST/PUT/PATCH/DELETE — controllers don't have to think about it.
+```
+
+For state-changing endpoints you don't need any PHP changes: the
+`Kernel` enforces CSRF before dispatch and rejects mismatched or
+missing tokens with 403.
 
 ## License
 
