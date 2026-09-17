@@ -36,6 +36,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Middleware\MiddlewareDiscoverer */
     private readonly MiddlewareDiscoverer $middlewareDiscoverer;
 
+    /** @var \Nqphp\Core\Config\FeatureConfig */
+    private readonly FeatureConfig $featureConfig;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -52,6 +55,9 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
         ]);
+        $this->featureConfig = new FeatureConfig([
+            $projectDir . '/src/Feature',
+        ]);
         $this->csrf = $csrf;
         $this->js = $js;
     }
@@ -61,6 +67,19 @@ final class Kernel implements HttpKernelInterface
     public function middlewareDiscoverer(): MiddlewareDiscoverer
     {
         return $this->middlewareDiscoverer;
+    }
+
+    /** Look up a per-feature config value. Returns $default if the
+     *  feature has no config or no value for $key. */
+    public function config(string $feature, string $key, mixed $default = null): mixed
+    {
+        return $this->featureConfig->load()->get($feature, $key, $default);
+    }
+
+    /** Raw config map for a feature (test/debug helper). */
+    public function featureConfig(): FeatureConfig
+    {
+        return $this->featureConfig;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
