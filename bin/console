@@ -165,10 +165,79 @@ $schedDiscoverer = new \Nqphp\Core\Scheduler\ScheduleDiscoverer([
     $projectDir . '/src/Core',
 ]);
 
+final class FeatureListCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly Kernel $kernel)
+    {
+        parent::__construct('feature:list', 'Show every discovered feature with its config, routes, middlewares, commands.');
+    }
+
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $features = $this->kernel->featureConfig()->load()->features();
+        $output->writeln('<info>Discovered features</info>');
+        if (\count($features) === 0) {
+            $output->writeln('  <comment>(no features — run from inside src/Feature)</comment>');
+            return self::SUCCESS;
+        }
+        foreach ($features as $name) {
+            $output->writeln('');
+            $output->writeln(sprintf('  <comment>%s</comment>', $name));
+
+            // Config
+            $config = $this->kernel->featureConfig()->all($name);
+            $output->writeln('    config:');
+            if (\count($config) === 0) {
+                $output->writeln('      <comment>(no config.php)</comment>');
+            } else {
+                foreach ($config as $key => $value) {
+                    $output->writeln(sprintf('      %s = %s', $key, \is_scalar($value) ? \var_export($value, true) : \json_encode($value)));
+                }
+            }
+
+            // Routes (only those under this feature's prefix)
+            $routes = $this->kernel->getRouteCollection();
+            $matched = [];
+            foreach ($routes->all() as $rname => $route) {
+                if (str_starts_with($rname, $name . ':')) {
+                    $matched[$rname] = $route;
+                }
+            }
+            $output->writeln('    routes:');
+            if (\count($matched) === 0) {
+                $output->writeln('      <comment>(no routes)</comment>');
+            } else {
+                foreach ($matched as $rname => $route) {
+                    $output->writeln(sprintf('      %s → %s %s', $rname, $route->getPath(), implode('|', $route->getMethods() ?: ['ANY'])));
+                }
+            }
+
+            // Middlewares — show ones whose name starts with "<feature>:"
+            $middlewares = $this->kernel->middlewareDiscoverer()->discover()->all();
+            $matched = [];
+            foreach ($middlewares as $mw) {
+                if (str_starts_with($mw['name'], $name . ':')) {
+                    $matched[] = $mw;
+                }
+            }
+            $output->writeln('    middlewares:');
+            if (\count($matched) === 0) {
+                $output->writeln('      <comment>(none)</comment>');
+            } else {
+                foreach ($matched as $mw) {
+                    $output->writeln(sprintf('      %s (order=%d)', $mw['name'], $mw['order']));
+                }
+            }
+        }
+        return self::SUCCESS;
+    }
+}
+
 $app = new Application('nqphp', '0.2.0-dev');
 $app->add(new RoutesListCommand($kernel));
 $app->add(new ScheduleListCommand($schedDiscoverer));
 $app->add(new ScheduleRunCommand($schedDiscoverer));
+$app->add(new FeatureListCommand($kernel));
 foreach ($cmdDiscoverer->discover() as $command) {
     $app->add($command);
 }
