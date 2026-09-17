@@ -8,7 +8,7 @@ use Nqphp\Core\Attribute\Service as ServiceAttr;
 
 /**
  * Auto-discovers #[Service]-annotated classes from:
- *   - src/Feature/*/Service/*.php   (project services)
+ *   - src/Feature/<Feature>/Service/<File>.php   (project services)
  *   - src/Core/Service/*.php        (framework, future)
  *
  * Returns a name → descriptor map so Kernel::service() can lazy-load

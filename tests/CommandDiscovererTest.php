@@ -50,7 +50,7 @@ final class CommandDiscovererTest extends TestCase
             __DIR__ . '/../src/Feature',
             __DIR__ . '/../src/Core',
         ]);
-        $names = array_map(static fn(Command $c) => $c->getName(), $discoverer->discover());
+        $names = array_map(static fn (Command $c) => $c->getName(), $discoverer->discover());
         $sorted = $names;
         sort($sorted);
         self::assertSame($sorted, $names, 'discoverer should return commands in deterministic order');

@@ -10,7 +10,7 @@ use Symfony\Component\Finder\Finder;
 /**
  * Auto-discovers scheduled tasks from #[Schedule] attributes on
  * static methods across:
- *   - src/Feature/*/Scheduler/*.php   (project schedules)
+ *   - src/Feature/<Feature>/Scheduler/<File>.php   (project schedules)
  *   - src/Core/Scheduler/*.php        (framework schedules, future)
  *
  * Returns each task as a descriptor (name, cron, description, call

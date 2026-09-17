@@ -10,8 +10,8 @@ use Nqphp\Core\Attribute\BeforeRoute;
 /**
  * Auto-discovers route-hook handlers (`#[BeforeRoute]`,
  * `#[AfterRoute]`) from static methods across:
- *   - src/Feature/*/Middleware/*.php   (project hooks live with middleware)
- *   - src/Core/Middleware/*.php        (framework, future)
+ *   - src/Feature/<Feature>/Middleware/<File>.php   (project hooks live with middleware)
+ *   - src/Core/Middleware/<File>.php        (framework, future)
  *
  * Returns two ordered lists: `before` and `after`. Each entry is
  * `{pattern, method, name, httpMethod}` — the runtime matches the

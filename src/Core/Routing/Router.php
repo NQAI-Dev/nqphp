@@ -7,7 +7,6 @@ namespace Nqphp\Core\Routing;
 use Nqphp\Core\Attribute\Controller as ControllerAttr;
 use Nqphp\Core\Attribute\Route as RouteAttr;
 use ReflectionClass;
-use Symfony\Component\Routing\Loader\AttributeLoader;
 use Symfony\Component\Routing\RouteCollection;
 
 /**

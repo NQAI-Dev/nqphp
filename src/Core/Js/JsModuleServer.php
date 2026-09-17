@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Js;
 
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Filesystem\Path;
 
 /**
  * Serves JavaScript ES modules from two sources:
@@ -44,8 +44,8 @@ final class JsModuleServer
     ) {
         // Combine all readable roots for the canonical-path containment check.
         $this->roots = array_merge(
-            array_map(fn(string $r) => $this->normalize($r), $frameworkRoots),
-            array_map(fn(string $r) => $this->normalize($r), $featureRoots),
+            array_map(fn (string $r) => $this->normalize($r), $frameworkRoots),
+            array_map(fn (string $r) => $this->normalize($r), $featureRoots),
         );
     }
 

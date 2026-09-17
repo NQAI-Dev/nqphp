@@ -8,7 +8,7 @@ use Nqphp\Core\Attribute\Entity as EntityAttr;
 
 /**
  * Auto-discovers #[Entity]-annotated classes from:
- *   - src/Feature/*/Entity/*.php   (project entities)
+ *   - src/Feature/<Feature>/Entity/<File>.php   (project entities)
  *   - src/Core/Entity/*.php        (framework, future)
  *
  * Returns a name → class map so EntityStore can instantiate new

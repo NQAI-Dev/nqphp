@@ -43,7 +43,7 @@ final class CommandDiscoverer
             $this->scanDir($dir, $commands);
         }
         // Stable ordering by command name — keeps `bin/console list` output deterministic.
-        \usort($commands, fn(Command $a, Command $b) => $a->getName() <=> $b->getName());
+        \usort($commands, fn (Command $a, Command $b) => $a->getName() <=> $b->getName());
         return $commands;
     }
 

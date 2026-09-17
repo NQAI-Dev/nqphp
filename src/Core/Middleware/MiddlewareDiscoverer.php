@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Nqphp\Core\Middleware;
 
 use Nqphp\Core\Attribute\Middleware as MiddlewareAttr;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Auto-discovers #[Middleware]-annotated classes from:
- *   - src/Feature/*/Middleware/*.php   (project)
- *   - src/Core/Middleware/*.php        (framework, future)
+ *   - src/Feature/<Feature>/Middleware/<File>.php   (project)
+ *   - src/Core/Middleware/<File>.php        (framework, future)
  *
  * Returns descriptors sorted by `order` ascending (low → high), so
  * the runner can call them in priority order.
@@ -48,7 +47,7 @@ final class MiddlewareDiscoverer
             }
             $this->scanDir($dir);
         }
-        \usort($this->middlewares, fn($a, $b) => $a['order'] <=> $b['order']);
+        \usort($this->middlewares, fn ($a, $b) => $a['order'] <=> $b['order']);
         return $this;
     }
 
