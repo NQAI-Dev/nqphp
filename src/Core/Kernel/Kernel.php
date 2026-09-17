@@ -54,6 +54,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Routing\UrlGenerator */
     private readonly KernelUrlGenerator $urlGenerator;
 
+    /** @var \Nqphp\Core\Container\FeatureContainer */
+    private readonly FeatureContainer $featureContainer;
+
     /** @var \Nqphp\Core\Middleware\RouteHookDiscoverer */
     private readonly RouteHookDiscoverer $routeHookDiscoverer;
 
@@ -97,6 +100,9 @@ final class Kernel implements HttpKernelInterface
         $this->urlGenerator = new KernelUrlGenerator(
             $this->router->discover()  // eager snapshot — RouteCollection is small
         );
+        $this->featureContainer = new FeatureContainer([
+            $projectDir . '/src/Feature',
+        ]);
         $this->routeHookDiscoverer = new RouteHookDiscoverer([
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
@@ -215,6 +221,21 @@ final class Kernel implements HttpKernelInterface
     public function urlGenerator(): KernelUrlGenerator
     {
         return $this->urlGenerator;
+    }
+
+    /** Build a Symfony ContainerBuilder with all per-feature services.yaml
+     *  loaded. Uncompiled — callers may further mutate or compile
+     *  (with a cache pool if they want to avoid re-parsing on every
+     *  request). */
+    public function featureContainer(): \Symfony\Component\DependencyInjection\ContainerBuilder
+    {
+        return $this->featureContainer->build();
+    }
+
+    /** FeatureContainer accessor for tests / introspection. */
+    public function featureContainerBuilder(): FeatureContainer
+    {
+        return $this->featureContainer;
     }
 
     /** Typed config accessor. Pass a `#[ConfigKey]` schema class; get
