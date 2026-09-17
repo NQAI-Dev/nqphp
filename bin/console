@@ -165,6 +165,33 @@ $schedDiscoverer = new \Nqphp\Core\Scheduler\ScheduleDiscoverer([
     $projectDir . '/src/Core',
 ]);
 
+final class ServiceListCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly Kernel $kernel)
+    {
+        parent::__construct('service:list', 'List all #[Service]-discovered service classes.');
+    }
+
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $services = $this->kernel->serviceDiscoverer()->discover()->all();
+        $output->writeln('<info>Discovered services</info>');
+        if (\count($services) === 0) {
+            $output->writeln('  <comment>(no services — define one with #[Service] under src/Feature/*/Service/)</comment>');
+            return self::SUCCESS;
+        }
+        $maxName = 0;
+        foreach ($services as $name => $desc) {
+            $maxName = max($maxName, \strlen($name));
+        }
+        $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-12s  %s', 'NAME', 'SCOPE', 'CLASS'));
+        foreach ($services as $name => $desc) {
+            $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-12s  %s', $name, $desc['scope'], $desc['class']));
+        }
+        return self::SUCCESS;
+    }
+}
+
 final class EntityListCommand extends \Symfony\Component\Console\Command\Command
 {
     public function __construct(private readonly Kernel $kernel)
@@ -266,6 +293,7 @@ $app->add(new ScheduleListCommand($schedDiscoverer));
 $app->add(new ScheduleRunCommand($schedDiscoverer));
 $app->add(new FeatureListCommand($kernel));
 $app->add(new EntityListCommand($kernel));
+$app->add(new ServiceListCommand($kernel));
 foreach ($cmdDiscoverer->discover() as $command) {
     $app->add($command);
 }
