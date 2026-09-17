@@ -85,6 +85,21 @@ final class Kernel implements HttpKernelInterface
             );
         }
 
+        // Run discovered middlewares in `order` ascending. Each
+        // middleware either returns a Response (terminal — short-
+        // circuits everything below) or null (continue). CSRF + auth
+        // belong at low numbers (so they can deny), logging /
+        // headers / metrics at high numbers (so they run last).
+        $middlewares = $this->middlewareDiscoverer->discover()->all();
+        foreach ($middlewares as $mw) {
+            [$instance, $method] = $mw['callable'];
+            $result = $instance->$method($request);
+            if ($result instanceof Response) {
+                return $this->withCsrfCookie($request, $result);
+            }
+            // null → continue to the next middleware.
+        }
+
         $routes = $this->router->discover();
         $context = (new RequestContext())->fromRequest($request);
         $matcher = new UrlMatcher($routes, $context);
