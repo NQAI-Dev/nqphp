@@ -165,7 +165,15 @@ final class SqliteDriver implements DriverInterface
     }
 
     /**
-     * @param array<string, mixed> $criteria
+     * Build a WHERE clause from operator-aware criteria.
+     *
+     * Supported criterion value shapes (Phase 2 #10):
+     *   scalar  → WHERE col = :col (default exact match)
+     *   [op => v] where op is one of: =, !=, >, <, >=, <=, LIKE
+     *   [IN => [...]] → WHERE col IN (:col_0, :col_1, ...)
+     *   [BETWEEN => [min, max]] → WHERE col BETWEEN :col_min AND :col_max
+     *
+     * @param array<string, mixed> $criteria column → scalar | operator-array
      * @return array{0: string, 1: array<string, mixed>} [where-clause, params]
      */
     private function buildWhere(array $criteria): array
@@ -175,11 +183,46 @@ final class SqliteDriver implements DriverInterface
         }
         $clauses = [];
         $params = [];
+        $i = 0;
         foreach ($criteria as $col => $value) {
-            $clauses[] = "`$col` = :$col";
-            $params[$col] = $value;
+            $placeholder = $col . '_' . $i++;
+            // Operator-array shape: [op => operand] or [IN => [...]] or [BETWEEN => [...]]
+            if (\is_array($value) && \count($value) === 1) {
+                $op = \strtoupper((string) \array_key_first($value));
+                $operand = $value[$op];
+                switch ($op) {
+                    case 'IN':
+                        if (!\is_array($operand)) {
+                            throw new \InvalidArgumentException('IN requires an array operand');
+                        }
+                        $placeholders = [];
+                        foreach ($operand as $idx => $item) {
+                            $p = $placeholder . '_' . $idx;
+                            $placeholders[] = ':' . $p;
+                            $params[$p] = $item;
+                        }
+                        $clauses[] = "\`$col\` IN (" . \implode(', ', $placeholders) . ')';
+                        continue 2;
+                    case 'BETWEEN':
+                        if (!\is_array($operand) || \count($operand) !== 2) {
+                            throw new \InvalidArgumentException('BETWEEN requires a 2-element array operand');
+                        }
+                        $clauses[] = "\`$col\` BETWEEN :{$placeholder}_min AND :{$placeholder}_max";
+                        $params[$placeholder . '_min'] = $operand[0];
+                        $params[$placeholder . '_max'] = $operand[1];
+                        continue 2;
+                    default:
+                        // Comparison / LIKE operator
+                        $clauses[] = "\`$col\` $op :$placeholder";
+                        $params[$placeholder] = $operand;
+                        continue 2;
+                }
+            }
+            // Scalar shape: exact match.
+            $clauses[] = "\`$col\` = :$placeholder";
+            $params[$placeholder] = $value;
         }
-        return ['WHERE ' . implode(' AND ', $clauses), $params];
+        return ['WHERE ' . \implode(' AND ', $clauses), $params];
     }
 
     /**

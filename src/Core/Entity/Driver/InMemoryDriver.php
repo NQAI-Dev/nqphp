@@ -98,15 +98,55 @@ final class InMemoryDriver implements DriverInterface
     }
 
     /**
+     * Mirror of SqliteDriver's operator-aware criteria matching.
+     *
+     * Supported shapes (Phase 2 #10):
+     *   scalar → exact ===
+     *   [op => v] for op in =, !=, >, <, >=, <=, LIKE
+     *   [IN => [...]] → in_array check
+     *   [BETWEEN => [min, max]] → $val >= min && $val <= max
+     *
      * @param array<string, mixed> $row
      * @param array<string, mixed> $criteria
      */
     private function matches(array $row, array $criteria): bool
     {
         foreach ($criteria as $key => $value) {
-            if (($row[$key] ?? null) !== $value) {
-                return false;
+            $cell = $row[$key] ?? null;
+            if (\is_array($value) && \count($value) === 1) {
+                $op = \strtoupper((string) \array_key_first($value));
+                $operand = $value[$op];
+                switch ($op) {
+                    case '=': if ($cell !== $operand) return false; break;
+                    case '!=': if ($cell == $operand) return false; break;
+                    case '>': if (!($cell > $operand)) return false; break;
+                    case '<': if (!($cell < $operand)) return false; break;
+                    case '>=': if (!($cell >= $operand)) return false; break;
+                    case '<=': if (!($cell <= $operand)) return false; break;
+                    case 'LIKE':
+                        // SQL LIKE: % = any, _ = one. Convert to a tiny regex.
+                        $regex = '';
+                        $pattern = (string) $operand;
+                        for ($i = 0; $i < \strlen($pattern); $i++) {
+                            $c = $pattern[$i];
+                            if ($c === '%') { $regex .= '.*'; }
+                            elseif ($c === '_') { $regex .= '.'; }
+                            else { $regex .= \preg_quote($c, '/'); }
+                        }
+                        if (!\preg_match('/' . $regex . '/', (string) $cell)) return false;
+                        break;
+                    case 'IN':
+                        if (!\is_array($operand) || !\in_array($cell, $operand, false)) return false;
+                        break;
+                    case 'BETWEEN':
+                        if (!\is_array($operand) || \count($operand) !== 2) return false;
+                        if (!($cell >= $operand[0] && $cell <= $operand[1])) return false;
+                        break;
+                    default: return false;
+                }
+                continue;
             }
+            if ($cell !== $value) return false;
         }
         return true;
     }

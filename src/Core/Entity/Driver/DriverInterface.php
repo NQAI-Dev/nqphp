@@ -33,14 +33,21 @@ interface DriverInterface
      * Find one row matching all criteria. Returns the data array
      * (column → value) or null.
      *
-     * @param array<string, mixed> $criteria column → expected-value
+     * Each criterion value can be either:
+     *   - a scalar: WHERE col = :col
+     *   - ['LIKE' => 'foo%']: WHERE col LIKE :col (operator is case-insensitive)
+     *   - ['IN' => [1,2,3]]: WHERE col IN (?, ?, ?)
+     *   - ['BETWEEN' => [10, 20]]: WHERE col BETWEEN ? AND ?
+     *   - ['>=' => 5], ['!=' => 'foo']: comparison operators
+     *
+     * Plain scalars are equivalent to ['=' => $value].
      */
     public function findOneBy(string $entityName, array $criteria): ?array;
 
     /**
      * Find rows matching all criteria, with optional ordering / pagination.
      *
-     * @param array<string, mixed>  $criteria column → expected-value
+     * @param array<string, mixed>  $criteria see findOneBy() for value shapes
      * @param array<int, string>     $orderBy  (column => 'asc'|'desc')
      * @return list<array<string, mixed>> list of column → value rows
      */
