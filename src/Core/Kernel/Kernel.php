@@ -4,9 +4,23 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Kernel;
 
+use Nqphp\Core\Config\ConfigSchemaDiscoverer;
+use Nqphp\Core\Config\ConfigStore;
+use Nqphp\Core\Config\FeatureConfig;
+use Nqphp\Core\DependencyInjection\FeatureContainer;
+use Nqphp\Core\Entity\Driver\InMemoryDriver;
+use Nqphp\Core\Entity\Driver\SqliteDriver;
+use Nqphp\Core\Entity\EntityDiscoverer;
+use Nqphp\Core\Entity\EntityManager;
+use Nqphp\Core\Http\RequestData;
 use Nqphp\Core\Js\JsModuleServer;
+use Nqphp\Core\Middleware\MiddlewareDiscoverer;
+use Nqphp\Core\Routing\KernelUrlGenerator;
+use Nqphp\Core\Routing\RouteHookDiscoverer;
 use Nqphp\Core\Routing\Router;
 use Nqphp\Core\Security\CsrfTokenManager;
+use Nqphp\Core\Service\ServiceDiscoverer;
+use PDO;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
