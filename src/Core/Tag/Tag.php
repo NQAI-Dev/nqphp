@@ -47,4 +47,22 @@ final class Tag
     {
         return new A();
     }
+
+    /** @return Img a fresh, empty <img> builder (self-closing). */
+    public static function img(): Img
+    {
+        return new Img();
+    }
+
+    /** @return Br a fresh, empty <br> builder (self-closing). */
+    public static function br(): Br
+    {
+        return new Br();
+    }
+
+    /** @return Hr a fresh, empty <hr> builder (self-closing). */
+    public static function hr(): Hr
+    {
+        return new Hr();
+    }
 }

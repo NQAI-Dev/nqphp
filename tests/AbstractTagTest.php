@@ -96,3 +96,39 @@ final class AbstractTagTest extends TestCase
         self::assertInstanceOf(A::class, Tag::a());
     }
 }
+
+class VoidTagsTest extends \PHPUnit\Framework\TestCase
+{
+    public function testImgRendersAsSelfClosing(): void
+    {
+        $img = (new \Nqphp\Core\Tag\Img())
+            ->setAttribute('src', 'avatar.png')
+            ->setAttribute('alt', 'Profile photo');
+        self::assertSame('<img src="avatar.png" alt="Profile photo">', $img->toHtml());
+    }
+
+    public function testImgToShortcut(): void
+    {
+        $img = \Nqphp\Core\Tag\Img::to('avatar.png', 'Profile photo');
+        self::assertSame('<img src="avatar.png" alt="Profile photo">', $img->toHtml());
+    }
+
+    public function testBrRendersAsSelfClosing(): void
+    {
+        $br = (new \Nqphp\Core\Tag\Br())->setClass('spacer');
+        self::assertSame('<br class="spacer">', $br->toHtml());
+    }
+
+    public function testHrRendersAsSelfClosing(): void
+    {
+        $hr = (new \Nqphp\Core\Tag\Hr())->setAttribute('data-section', 'end');
+        self::assertSame('<hr data-section="end">', $hr->toHtml());
+    }
+
+    public function testTagFactoryHasVoidElements(): void
+    {
+        self::assertInstanceOf(\Nqphp\Core\Tag\Img::class, \Nqphp\Core\Tag\Tag::img());
+        self::assertInstanceOf(\Nqphp\Core\Tag\Br::class, \Nqphp\Core\Tag\Tag::br());
+        self::assertInstanceOf(\Nqphp\Core\Tag\Hr::class, \Nqphp\Core\Tag\Tag::hr());
+    }
+}
