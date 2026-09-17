@@ -28,6 +28,9 @@ What ships in this repo:
   ES-module serving
 * `src/Core/Security/` — double-submit-cookie CSRF (`CsrfTokenManager`)
 * `src/Core/Controller/` — base class with `render / redirect / json`
+* `src/Core/Entity/` — custom ORM (`#[Id]` / `#[Column]` / `#[Where]`,
+  `EntityManager`, pluggable `DriverInterface` with `InMemoryDriver`
+  + `SqliteDriver` PDO-backed)
 
 ## Architecture decisions
 
@@ -48,6 +51,15 @@ What ships in this repo:
   `symfony/http-kernel`, `symfony/console`, `symfony/dependency-injection`,
   `symfony/scheduler`. Not `framework-bundle` — too opinionated. We
   glue components together.
+
+* **Custom ORM, no Doctrine.** `#[Id]`, `#[Column]`, `#[Where]`,
+  `EntityManager` (Symfony-style `findBy` / `findOneBy` / `count` /
+  `persist`), and a pluggable `DriverInterface` with two shipped
+  implementations: `InMemoryDriver` (array-backed, ephemeral, fast)
+  and `SqliteDriver` (PDO + SQLite, persistent, the production
+  choice). Doctrine was rejected because the framework's reflection
+  + attribute model is enough for the project's persistence needs
+  without the bundle weight.
 
 * **Auto-discovery via attributes.** `#[Controller]` on the class,
   `#[Route]` on the method. No route files. `#[AsCommand]` for CLI.
@@ -121,12 +133,111 @@ bin/console routes:list          List all auto-discovered HTTP routes.
 bin/console schedule:list       List all #[Schedule]-annotated tasks.
 bin/console schedule:run        Run schedules whose cron is due now.
 bin/console feature:list        Per-feature inventory: config + routes + middlewares.
+bin/console entity:list         List all #[Entity]-discovered domain entities.
+bin/console entity:show <name>  Show detailed info (#[Id] + #[Column]) for one entity.
 bin/console list                 Show Symfony Console's auto-generated help.
 ```
 
 (`hello:greet` and any other feature commands are *not* shipped by
 the framework — they live in your app's `src/Feature/{Name}/Command/`
 and are discovered at boot.)
+
+## Custom ORM
+
+The framework ships a small, custom ORM under `src/Core/Entity/` —
+**no Doctrine dependency**. Three attributes + one manager + one
+pluggable driver:
+
+```php
+namespace App\MyApp\Entity;
+
+use Nqphp\Core\Attribute\Column;
+use Nqphp\Core\Attribute\Entity;
+use Nqphp\Core\Attribute\Id;
+use Nqphp\Core\Attribute\Where;
+
+#[Entity(name: 'user')]
+final class User
+{
+    #[Id]
+    public ?int $id = null;
+
+    #[Column(name: 'email', length: 255)]
+    public string $email = '';
+
+    #[Column(name: 'created_at')]
+    public \DateTimeImmutable $createdAt;
+
+    #[Where(operator: 'LIKE')]
+    public string $displayName = '';
+}
+```
+
+Then in your application code:
+
+```php
+$em = $kernel->entityManager();
+
+// Persist (Unit-of-Work — flush() is currently a no-op until the SQL
+// driver becomes the default; in-memory and Sqlite drivers persist
+// immediately on persist()).
+$alice = new User();
+$alice->email = 'alice@example.com';
+$alice->createdAt = new \DateTimeImmutable();
+$alice->displayName = 'alice';
+$em->persist($alice);
+
+// Symfony-style query DSL
+$em->findAll(User::class);
+$em->findBy(User::class, ['email' => 'alice@example.com']);
+$em->findOneBy(User::class, ['email' => 'alice@example.com']);
+$em->count(User::class);
+
+// Operator-aware criteria (Phase 2 #10)
+$em->findBy(User::class, ['displayName' => ['LIKE' => 'ali%']]);
+$em->findBy(User::class, ['id' => ['IN' => [1, 2, 3]]]);
+$em->findBy(User::class, ['email' => ['BETWEEN' => ['a@x.com', 'z@x.com']]]);
+$em->findBy(User::class, ['createdAt' => ['>=' => '2024-01-01']]);
+```
+
+### Choosing a driver
+
+The default driver is `SqliteDriver` (in-memory when no
+`NQPHP_SQLITE_PATH` is set, file-backed otherwise). Override at
+boot:
+
+```php
+use Nqphp\Core\Entity\EntityManager;
+use Nqphp\Core\Entity\Driver\SqliteDriver;
+use Nqphp\Core\Entity\Driver\InMemoryDriver;
+
+// File-backed SQLite
+$em = new EntityManager(
+    $kernel->entityDiscoverer(),
+    new SqliteDriver(new \PDO('sqlite:' . __DIR__ . '/var/data.db'))
+);
+
+// In-memory (tests, one-shot CLI runs)
+$em = new EntityManager(
+    $kernel->entityDiscoverer(),
+    new InMemoryDriver()
+);
+```
+
+Both drivers implement `Nqphp\Core\Entity\Driver\DriverInterface`,
+so swapping is a one-line change at the wiring layer.
+
+### Why not Doctrine?
+
+Doctrine is a full-featured ORM with bundles, annotations, schema
+migrations, and an entity manager optimized for hundreds of mapped
+classes. `nqphp` boots a single SQLite file or an in-memory array
+and serves a few dozen entities per project. The reflection +
+attribute model that already drives routing, middlewares, and
+scheduling fits this footprint without Doctrine's overhead. If a
+project needs Doctrine's query builder, unit-of-work, or
+DBAL-style portability, swap the `EntityManager` wiring for
+`Doctrine\ORM\EntityManager` — the framework doesn't lock you in.
 
 ## Phase 2 status (framework-side)
 
@@ -141,13 +252,27 @@ and are discovered at boot.)
   `Kernel::config(string $feature, string $key, $default)`.
 * ✅ `bin/console feature:list` — per-feature inventory.
 * ✅ PHP CS Fixer — `composer cs:check` / `cs:fix`, CI step.
+* ✅ Custom ORM — `#[Id]`, `#[Column]`, `EntityManager` with
+  `findBy` / `findOneBy` / `count` / `persist`, plus `DriverInterface`
+  with `InMemoryDriver` (array) + `SqliteDriver` (PDO + SQLite).
+* ✅ `#[Where]` attribute + operator-aware criteria — `LIKE`, `IN`,
+  `BETWEEN`, `>=`, `<=`, `!=`, etc. on top of the exact-match API.
+* ✅ `bin/console entity:list` + `entity:show <name>` — entity
+  discovery reports and single-entity detail view.
+* ✅ Kernel wires `SqliteDriver` as default with `NQPHP_DRIVER=memory`
+  env override falling back to `InMemoryDriver`.
 
 Open Phase 2 follow-ups (not yet shipped, lower priority):
 
 * Full Symfony DI integration (per-feature `services.yaml` with
   actual service definitions; current per-feature `config.php` is the
   data-only half).
-* `#[Entity]` attribute + Doctrine bridge.
+* Real schema migrations (the current `SqliteDriver::ensureSchema()`
+  drops-and-recreates — fine for Phase 1 but not safe for production
+  data).
+* `EntityManager::flush()` becomes a real barrier once multiple
+  persists per request are common (currently each persist() writes
+  immediately).
 
 ## License
 
