@@ -187,8 +187,9 @@ $alice->createdAt = new \DateTimeImmutable();
 $alice->displayName = 'alice';
 $em->persist($alice);
 
-// Symfony-style query DSL
+// Symfony-style query DSL + remove (Phase 2 #11)
 $em->findAll(User::class);
+$em->remove($alice);  // returns true once, false on idempotent re-call
 $em->findBy(User::class, ['email' => 'alice@example.com']);
 $em->findOneBy(User::class, ['email' => 'alice@example.com']);
 $em->count(User::class);
@@ -261,6 +262,10 @@ DBAL-style portability, swap the `EntityManager` wiring for
   discovery reports and single-entity detail view.
 * ✅ Kernel wires `SqliteDriver` as default with `NQPHP_DRIVER=memory`
   env override falling back to `InMemoryDriver`.
+* ✅ `EntityManager::remove()` (Phase 2 #11) — idempotent delete by
+  `#[Id]`, throws on never-persisted entities. Mirrors `persist()`
+  symmetry; cascade is opt-in via explicit calls (callers control
+  what gets removed when a parent goes away).
 
 Open Phase 2 follow-ups (not yet shipped, lower priority):
 

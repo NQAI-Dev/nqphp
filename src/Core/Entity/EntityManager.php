@@ -65,6 +65,37 @@ final class EntityManager
     {
     }
 
+    /**
+     * Delete an entity by its primary key.
+     *
+     * Returns true if the entity was found and deleted; false if no
+     * row with that id existed (idempotent — second call on the same
+     * entity returns false without raising).
+     *
+     * Phase 2 #11 — completes the persistence-side surface alongside
+     * persist() + flush(). Cascade semantics are NOT included: deleting
+     * a parent does not delete children. Callers needing cascade must
+     * remove related entities explicitly before removing the parent.
+     *
+     * @param object $entity an entity with a non-null #[Id] property
+     * @return bool true if a row was deleted, false otherwise
+     */
+    public function remove(object $entity): bool
+    {
+        $entityName = $this->entityNameFor($entity);
+        $reflection = new ReflectionClass($entity);
+        $idProp = $this->idPropertyFor($reflection);
+        $idProp->setAccessible(true);
+        $id = $idProp->getValue($entity);
+        if ($id === null) {
+            throw new \RuntimeException(sprintf(
+                'Cannot remove %s: its #[Id] is null (entity was never persisted).',
+                $entityName
+            ));
+        }
+        return $this->driver->delete($entityName, (int) $id);
+    }
+
     /** @return list<object> */
     public function findAll(string $entityClass): array
     {
