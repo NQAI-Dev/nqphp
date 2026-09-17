@@ -263,14 +263,18 @@ final class EntityManager
         }
         /** @var Entity $entityAttr */
         $entityAttr = $attrs[0]->newInstance();
+        // `$name` is the canonical handle (Entity::name) used for discover lookup.
+        // `$tableName` is the physical SQL table name — defaults to $name when
+        // the entity doesn't override `table` (Phase 2 #10+ extension).
         $name = $entityAttr->name;
+        $tableName = $entityAttr->table ?? $entityAttr->name;
         if (!$this->discoverer->discover()->has($name)) {
             throw new \RuntimeException(sprintf(
                 'Entity "%s" not discovered — check the file path under src/Feature/*/Entity/',
                 $name
             ));
         }
-        return $name;
+        return $tableName;
     }
 
     /**

@@ -33,8 +33,24 @@ namespace Nqphp\Core\Attribute;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final class Entity
 {
+    /**
+     * @param string      $name  Canonical handle used by application code
+     *                           and EntityDiscoverer map keys (e.g. 'user').
+     *                           Required — every entity must have one.
+     * @param string|null $table Physical SQL table name (default: same as $name).
+     *                           Override for legacy DB integration where the
+     *                           canonical handle differs from the physical
+     *                           table (e.g. Entity class `User` mapping to an
+     *                           existing `app_users` table), or for
+     *                           multi-tenant schemas where a single entity
+     *                           class targets per-tenant tables at runtime.
+     *
+     *                           When null, SqliteDriver uses $name verbatim —
+     *                           no behavior change for existing entities.
+     */
     public function __construct(
         public readonly string $name,
+        public readonly ?string $table = null,
     ) {
     }
 }

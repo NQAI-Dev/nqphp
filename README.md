@@ -156,7 +156,11 @@ use Nqphp\Core\Attribute\Entity;
 use Nqphp\Core\Attribute\Id;
 use Nqphp\Core\Attribute\Where;
 
-#[Entity(name: 'user')]
+// `name` is the canonical handle (used in EntityDiscoverer map, CLI
+// introspection). `table` is the physical SQL table name — defaults to
+// `name` when omitted. Override `table` for legacy DB integration or
+// multi-tenant schemas where handle and physical table differ.
+#[Entity(name: 'user', table: 'app_users')]
 final class User
 {
     #[Id]
@@ -308,6 +312,10 @@ DBAL-style portability, swap the `EntityManager` wiring for
 * ✅ `#[Column(default: ...)]` — DEFAULT clause для SQLite (Phase 2
   #10 extension). String values SQL-escaped (`'` → `''`), booleans →
   1/0, numeric as-is, null/no-arg → no DEFAULT clause.
+* ✅ `#[Entity(name: ..., table: ...)]` — custom physical SQL table
+  name override (Phase 2 #10+ extension). Defaults to `name` for
+  backward compat; useful для legacy DB integration та multi-tenant
+  schemas де canonical handle і physical table розходяться.
 * ✅ `#[Where]` attribute + operator-aware criteria — `LIKE`, `IN`,
   `BETWEEN`, `>=`, `<=`, `!=`, etc. on top of the exact-match API.
 * ✅ `bin/console entity:list` + `entity:show <name>` — entity
