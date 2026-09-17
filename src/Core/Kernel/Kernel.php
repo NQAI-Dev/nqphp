@@ -52,7 +52,7 @@ final class Kernel implements HttpKernelInterface
     private readonly EntityStore $entityStore;
 
     /** @var \Nqphp\Core\Routing\UrlGenerator */
-    private readonly UrlGenerator $urlGenerator;
+    private readonly KernelUrlGenerator $urlGenerator;
 
     /** @var \Nqphp\Core\Middleware\RouteHookDiscoverer */
     private readonly RouteHookDiscoverer $routeHookDiscoverer;
@@ -94,7 +94,7 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->entityStore = new EntityStore($this->entityDiscoverer);
-        $this->urlGenerator = new UrlGenerator(
+        $this->urlGenerator = new KernelUrlGenerator(
             $this->router->discover()  // eager snapshot — RouteCollection is small
         );
         $this->routeHookDiscoverer = new RouteHookDiscoverer([
@@ -212,7 +212,7 @@ final class Kernel implements HttpKernelInterface
     }
 
     /** UrlGenerator accessor for tests / introspection. */
-    public function urlGenerator(): UrlGenerator
+    public function urlGenerator(): KernelUrlGenerator
     {
         return $this->urlGenerator;
     }

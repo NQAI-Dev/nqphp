@@ -33,7 +33,7 @@ use Symfony\Component\Routing\RouteCollection;
  * Throws \Symfony\Component\Routing\Exception\RouteNotFoundException
  * if the named route doesn't exist (delegated from Symfony).
  */
-final class UrlGenerator
+final class KernelUrlGenerator
 {
     public function __construct(private readonly RouteCollection $routes)
     {
