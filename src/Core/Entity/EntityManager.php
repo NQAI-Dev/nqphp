@@ -7,6 +7,8 @@ namespace Nqphp\Core\Entity;
 use Nqphp\Core\Attribute\Column;
 use Nqphp\Core\Attribute\Entity;
 use Nqphp\Core\Attribute\Id;
+use Nqphp\Core\Entity\Driver\DriverInterface;
+use Nqphp\Core\Entity\Driver\InMemoryDriver;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -28,17 +30,10 @@ use ReflectionProperty;
  */
 final class EntityManager
 {
-    /** @var array<string, array<int, object>> entity-name → rows-by-id */
-    private array $rows = [];
-
-    /** @var array<string, int> entity-name → next-id counter */
-    private array $nextIds = [];
-
-    /** @var object[] pending persists (waiting for flush) */
-    private array $pending = [];
-
-    public function __construct(private readonly EntityDiscoverer $discoverer)
-    {
+    public function __construct(
+        private readonly EntityDiscoverer $discoverer,
+        private readonly DriverInterface $driver = new InMemoryDriver(),
+    ) {
     }
 
     /**
