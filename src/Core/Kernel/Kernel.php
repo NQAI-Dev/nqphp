@@ -39,6 +39,12 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Config\FeatureConfig */
     private readonly FeatureConfig $featureConfig;
 
+    /** @var \Nqphp\Core\Service\ServiceDiscoverer */
+    private readonly ServiceDiscoverer $serviceDiscoverer;
+
+    /** @var array<string, object> Singleton cache: name → instantiated service */
+    private array $serviceInstances = [];
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -57,6 +63,10 @@ final class Kernel implements HttpKernelInterface
         ]);
         $this->featureConfig = new FeatureConfig([
             $projectDir . '/src/Feature',
+        ]);
+        $this->serviceDiscoverer = new ServiceDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
         ]);
         $this->csrf = $csrf;
         $this->js = $js;
@@ -80,6 +90,33 @@ final class Kernel implements HttpKernelInterface
     public function featureConfig(): FeatureConfig
     {
         return $this->featureConfig;
+    }
+
+    /** Lazy service accessor. Looks up by name; instantiates the
+     *  service once for `singleton` scope, or every call for `prototype`.
+     *  Throws \RuntimeException if the name is unknown. */
+    public function service(string $name): object
+    {
+        $discovered = $this->serviceDiscoverer->discover();
+        $desc = $discovered->describe($name);
+        if ($desc === null) {
+            throw new \RuntimeException("Unknown service: $name");
+        }
+        if ($desc['scope'] === 'singleton') {
+            if (!isset($this->serviceInstances[$name])) {
+                $this->serviceInstances[$name] = new $desc['class']();
+            }
+            return $this->serviceInstances[$name];
+        }
+        // prototype — new instance each call
+        return new $desc['class']();
+    }
+
+    /** ServiceDiscoverer accessor for tests / introspection commands
+     *  (e.g. a future `bin/console service:list` mirroring `feature:list`). */
+    public function serviceDiscoverer(): ServiceDiscoverer
+    {
+        return $this->serviceDiscoverer;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
