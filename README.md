@@ -255,11 +255,20 @@ translates into SQL DDL:
 | `#[Column(nullable: true)]` | column allows NULL |
 | `#[Column(nullable: false)]` | `NOT NULL` (the default) |
 | `#[Column(unique: true)]` | `NOT NULL UNIQUE` (Phase 2 #10 extension) |
+| `#[Column(default: 'pending')]` | `DEFAULT 'pending'` (string with quote escape) |
+| `#[Column(default: 0)]` | `DEFAULT 0` |
+| `#[Column(default: true)]` | `DEFAULT 1` (SQLite has no native bool) |
+| `#[Column(default: null)]` | no DEFAULT clause (default behavior) |
 
 Multiple `#[Column(unique: true)]` in the same entity become multiple
 UNIQUE constraints (enforced independently by SQLite). Combined with
 `#[Id]` as primary key, this gives a complete schema layer without
 writing migration files.
+
+String defaults are SQL-escaped per the SQL standard: a single quote
+inside a literal renders as `''` (two single quotes). This is the
+only safe way to embed user-controlled strings in DDL because DDL
+does not go through PDO prepared statements. Phase 2 #10 extension.
 
 `InMemoryDriver` ignores schema entirely (no-op) — only `SqliteDriver`
 generates DDL. Schema is dropped and re-created on each
@@ -296,6 +305,9 @@ DBAL-style portability, swap the `EntityManager` wiring for
   with `InMemoryDriver` (array) + `SqliteDriver` (PDO + SQLite).
 * ✅ `#[Column(unique: true)]` — UNIQUE column-constraint в SQLite
   schema (Phase 2 #10 extension).
+* ✅ `#[Column(default: ...)]` — DEFAULT clause для SQLite (Phase 2
+  #10 extension). String values SQL-escaped (`'` → `''`), booleans →
+  1/0, numeric as-is, null/no-arg → no DEFAULT clause.
 * ✅ `#[Where]` attribute + operator-aware criteria — `LIKE`, `IN`,
   `BETWEEN`, `>=`, `<=`, `!=`, etc. on top of the exact-match API.
 * ✅ `bin/console entity:list` + `entity:show <name>` — entity

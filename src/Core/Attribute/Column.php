@@ -51,6 +51,12 @@ final class Column
      * @param bool         $unique   Whether the column has a UNIQUE constraint.
      *                              SqliteDriver translates this to a UNIQUE column.
      *                              No-op for InMemoryDriver (no schema).
+     * @param mixed        $default  Column default value (NULL = no DEFAULT clause).
+     *                              SqliteDriver renders this as `DEFAULT <value>` in DDL.
+     *                              String defaults are single-quoted with embedded
+     *                              single quotes escaped per SQL standard (`'` → `''`).
+     *                              Boolean defaults render as 1/0 (SQLite has no native bool).
+     *                              NULL/null skips the DEFAULT clause entirely.
      */
     public function __construct(
         public readonly ?string $name = null,
@@ -58,6 +64,7 @@ final class Column
         public readonly bool $nullable = false,
         public readonly ?int $length = null,
         public readonly bool $unique = false,
+        public readonly mixed $default = null,
     ) {
     }
 }

@@ -108,7 +108,8 @@ final class SqliteDriver implements DriverInterface
             $type = $this->sqliteType($meta['type'] ?? 'string');
             $nullable = ($meta['nullable'] ?? false) ? '' : ' NOT NULL';
             $unique = ($meta['unique'] ?? false) ? ' UNIQUE' : '';
-            $this->schemas[$entityName][$name] = $type . $nullable . $unique;
+            $default = $this->renderDefault($meta['default'] ?? null);
+            $this->schemas[$entityName][$name] = $type . $nullable . $unique . $default;
         }
         // Drop and re-create is the simplest schema-bootstrap for now.
         // Real migrations come in a follow-up commit.
@@ -228,7 +229,30 @@ final class SqliteDriver implements DriverInterface
         return ['WHERE ' . \implode(' AND ', $clauses), $params];
     }
 
-    /**
+    // Render a default value as SQLite DEFAULT clause fragment.
+    // Returns '' (no DEFAULT), ' DEFAULT 42' (numeric),
+    // " DEFAULT 'foo'" (string with SQL-standard escape), or
+    // ' DEFAULT 1' (true) / ' DEFAULT 0' (false).
+    // SQL-standard escape: a single quote inside a single-quoted
+    // literal is rendered as two single quotes. This is the only
+    // safe way to embed user-controlled strings in DDL since DDL
+    // does not go through PDO prepared statements.
+    private function renderDefault(mixed $default): string
+    {
+        if ($default === null) {
+            return '';
+        }
+        if (is_bool($default)) {
+            return ' DEFAULT ' . ($default ? '1' : '0');
+        }
+        if (is_int($default) || is_float($default)) {
+            return ' DEFAULT ' . $default;
+        }
+        $escaped = str_replace("'", "''", (string) $default);
+        return " DEFAULT '" . $escaped . "'";
+    }
+
+        /**
      * @return string SQLite column type for a logical type
      */
     private function sqliteType(string $logical): string
