@@ -33,6 +33,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Routing\Router */
     private $router;
 
+    /** @var \Nqphp\Core\Middleware\MiddlewareDiscoverer */
+    private readonly MiddlewareDiscoverer $middlewareDiscoverer;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -45,8 +48,19 @@ final class Kernel implements HttpKernelInterface
         $this->router = new Router([
             $projectDir . '/src/Feature',
         ]);
+        $this->middlewareDiscoverer = new MiddlewareDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ]);
         $this->csrf = $csrf;
         $this->js = $js;
+    }
+
+    /** Public accessor for tests + future introspection commands
+     *  (e.g. `bin/console middleware:list` mirroring `routes:list`). */
+    public function middlewareDiscoverer(): MiddlewareDiscoverer
+    {
+        return $this->middlewareDiscoverer;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
