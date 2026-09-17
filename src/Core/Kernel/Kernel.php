@@ -51,6 +51,12 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Entity\EntityStore */
     private readonly EntityStore $entityStore;
 
+    /** @var \Nqphp\Core\Config\ConfigSchemaDiscoverer */
+    private readonly ConfigSchemaDiscoverer $configSchemaDiscoverer;
+
+    /** @var \Nqphp\Core\Config\ConfigStore */
+    private readonly ConfigStore $configStore;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -79,6 +85,11 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->entityStore = new EntityStore($this->entityDiscoverer);
+        $this->configSchemaDiscoverer = new ConfigSchemaDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ]);
+        $this->configStore = new ConfigStore($this->featureConfig);
         $this->csrf = $csrf;
         $this->js = $js;
     }
@@ -142,6 +153,21 @@ final class Kernel implements HttpKernelInterface
     public function entityDiscoverer(): EntityDiscoverer
     {
         return $this->entityDiscoverer;
+    }
+
+    /** Typed config accessor. Pass a `#[ConfigKey]` schema class; get
+     *  back an instance with its public typed properties filled from
+     *  src/Feature/{Feature}/config.php. Missing keys fall back to
+     *  the class's own default values. */
+    public function typedConfig(string $schemaClass): object
+    {
+        return $this->configStore->get($schemaClass);
+    }
+
+    /** ConfigSchemaDiscoverer accessor for tests / introspection. */
+    public function configSchemaDiscoverer(): ConfigSchemaDiscoverer
+    {
+        return $this->configSchemaDiscoverer;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
