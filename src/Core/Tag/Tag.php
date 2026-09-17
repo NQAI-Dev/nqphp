@@ -83,4 +83,16 @@ final class Tag
     {
         return new Label();
     }
+
+    /** @return Select a fresh, empty <select> builder. */
+    public static function select(): Select
+    {
+        return new Select();
+    }
+
+    /** @return Option a fresh, empty <option> builder. */
+    public static function option(): Option
+    {
+        return new Option();
+    }
 }

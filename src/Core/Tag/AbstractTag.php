@@ -45,6 +45,32 @@ abstract class AbstractTag
 
     protected string $content = '';
 
+    /** @var string Rendered child HTML (concatenation of appendChild calls). */
+    protected string $children = '';
+
+    /** Append a child tag. The child's rendered HTML becomes part of
+     *  this tag's content. Useful for <select><option>...</option></select>,
+     *  <ul><li>...</li></ul>, and similar nested structures.
+     *
+     * @param self $child the child tag (rendered via toHtml()).
+     * @return static    this tag instance, for fluent chaining. */
+    public function appendChild(self $child): static
+    {
+        $this->children .= $child->toHtml();
+        return $this;
+    }
+
+    /** Replace the entire child list with raw HTML. Useful for
+     *  hand-rendered children (e.g. when reading from a template).
+     *
+     * @param string $html pre-rendered child HTML.
+     * @return static     this tag instance. */
+    public function setChildren(string $html): static
+    {
+        $this->children = $html;
+        return $this;
+    }
+
     /** Set a single attribute. Replaces existing value if the key
      *  was set before. Attribute names are stored as-given (caller
      *  controls case — most HTML5 attribute names are lowercase).
@@ -137,7 +163,11 @@ abstract class AbstractTag
         if ($this->selfClosing) {
             return '<' . $this->tag . $attrString . '>';
         }
-        return '<' . $this->tag . $attrString . '>' . self::escape($this->content) . '</' . $this->tag . '>';
+        // Inner content = explicit setContent() + appended children.
+        // Child HTML is rendered as-is (children escape themselves via
+        // their own toHtml() calls), so we don't re-escape here.
+        $inner = self::escape($this->content) . $this->children;
+        return '<' . $this->tag . $attrString . '>' . $inner . '</' . $this->tag . '>';
     }
 
     /** PHP's __toString — useful for `echo Tag::div();`

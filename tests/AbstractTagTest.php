@@ -203,3 +203,82 @@ class FormInputTagsTest extends \PHPUnit\Framework\TestCase
         self::assertInstanceOf(\Nqphp\Core\Tag\Label::class, \Nqphp\Core\Tag\Tag::label());
     }
 }
+
+class SelectOptionTest extends \PHPUnit\Framework\TestCase
+{
+    public function testAppendChildRendersChildren(): void
+    {
+        $div = (new \Nqphp\Core\Tag\Div())
+            ->appendChild(\Nqphp\Core\Tag\Tag::span()->setContent('a'))
+            ->appendChild(\Nqphp\Core\Tag\Tag::span()->setContent('b'));
+        self::assertSame('<div><span>a</span><span>b</span></div>', $div->toHtml());
+    }
+
+    public function testSetChildrenOverridesAppended(): void
+    {
+        $div = (new \Nqphp\Core\Tag\Div())
+            ->appendChild(\Nqphp\Core\Tag\Tag::span()->setContent('a'))
+            ->setChildren('<i>raw</i>');
+        // setChildren REPLACES appended children (raw HTML is trusted).
+        self::assertSame('<div><i>raw</i></div>', $div->toHtml());
+    }
+
+    public function testContentAndChildrenConcatenate(): void
+    {
+        // explicit setContent() + appended children both render.
+        $div = (new \Nqphp\Core\Tag\Div())
+            ->setContent('before')
+            ->appendChild(\Nqphp\Core\Tag\Tag::span()->setContent('middle'))
+            ->setContent('after');
+        // Note: setContent replaces the content field, so only 'after'
+        // survives — appended child still renders.
+        self::assertSame('<div>after<span>middle</span></div>', $div->toHtml());
+    }
+
+    public function testOptionShortcut(): void
+    {
+        $o = \Nqphp\Core\Tag\Option::of('red', 'Red');
+        self::assertSame('<option value="red">Red</option>', $o->toHtml());
+    }
+
+    public function testOptionSelectedShortcut(): void
+    {
+        $o = \Nqphp\Core\Tag\Option::of('blue', 'Blue', true);
+        self::assertSame('<option value="blue" selected="selected">Blue</option>', $o->toHtml());
+    }
+
+    public function testSelectWithMultipleOptions(): void
+    {
+        $s = \Nqphp\Core\Tag\Select::of('color', 'red', 'Red', true)
+            ->addOption('green', 'Green')
+            ->addOption('blue', 'Blue');
+        self::assertSame(
+            '<select name="color">'
+            . '<option value="red" selected="selected">Red</option>'
+            . '<option value="green">Green</option>'
+            . '<option value="blue">Blue</option>'
+            . '</select>',
+            $s->toHtml()
+        );
+    }
+
+    public function testSelectEmpty(): void
+    {
+        $s = \Nqphp\Core\Tag\Select::of('color');
+        self::assertSame('<select name="color"></select>', $s->toHtml());
+    }
+
+    public function testOptionEscapesValueAndContent(): void
+    {
+        $o = \Nqphp\Core\Tag\Option::of('a"b', '<script>x</script>');
+        $html = $o->toHtml();
+        self::assertStringContainsString('&quot;', $html);
+        self::assertStringNotContainsString('<script>', $html);
+    }
+
+    public function testTagFactoryHasSelectAndOption(): void
+    {
+        self::assertInstanceOf(\Nqphp\Core\Tag\Select::class, \Nqphp\Core\Tag\Tag::select());
+        self::assertInstanceOf(\Nqphp\Core\Tag\Option::class, \Nqphp\Core\Tag\Tag::option());
+    }
+}
