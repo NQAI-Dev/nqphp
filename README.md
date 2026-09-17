@@ -6,16 +6,17 @@
 ## Status: pre-alpha Phase 2
 
 `nqphp` is now a **pure framework package** — only `src/Core/` ships
-in this repo. Concrete features (controllers, commands, jobs, etc.)
-live in **separate application repositories** that `composer require
-nqai-dev/nqphp`. The canonical reference scaffold lives in
+in this repo. Concrete applications (controllers, commands, jobs,
+middleware, JS modules) live in **separate application repositories**
+that `composer require nqai-dev/nqphp`. The canonical reference
+scaffold lives in
 [`nqai-dev/nqphp-template`](https://github.com/NQAI-Dev/nqphp-template)
 and demonstrates the framework's conventions.
 
 What ships in this repo:
 
 * `src/Core/Attribute/` — `#[Controller]`, `#[Route]`, `#[AsCommand]`,
-  `#[Middleware]`, `#[Schedule]`, plus more Phase 2 attributes
+  `#[Middleware]`, `#[Schedule]` plus more Phase 2 attributes
 * `src/Core/Routing/` — route auto-discovery + named groups
 * `src/Core/Kernel/` — minimal HTTP kernel; runs discovered middlewares
   around route dispatch
@@ -33,7 +34,8 @@ What ships in this repo:
 * **Framework + apps are separate repos.** Framework code ships here
   as a Composer package; consumer apps live in their own repos with
   their own `composer.json` that `require`s `nqai-dev/nqphp`. The
-  scaffold repo [`nqphp-template`](https://github.com/NQAI-Dev/nqphp-template)
+  scaffold repo
+  [`nqphp-template`](https://github.com/NQAI-Dev/nqphp-template)
   demonstrates the convention end-to-end.
 
 * **Vertical Slice Architecture.** Each feature in a consumer app is
@@ -88,17 +90,24 @@ In your `bin/console`:
 
 ```php
 require __DIR__ . '/../vendor/autoload.php';
+use Nqphp\Core\Kernel\Kernel;
 use Nqphp\Core\Console\CommandDiscoverer;
-use Nqphp\Core\Routing\Router;
 use Nqphp\Core\Scheduler\ScheduleDiscoverer;
 use Nqphp\Core\Middleware\MiddlewareDiscoverer;
 use Symfony\Component\Console\Application;
 
 $projectDir = dirname(__DIR__);
 $kernel = new Kernel($projectDir);
+$cmdDiscoverer = new CommandDiscoverer([$projectDir . '/src/Feature', $projectDir . '/src/Core']);
+$schedDiscoverer = new ScheduleDiscoverer([$projectDir . '/src/Feature', $projectDir . '/src/Core']);
+$mwDiscoverer = new MiddlewareDiscoverer([$projectDir . '/src/Feature', $projectDir . '/src/Core']);
+
 $app = new Application('myapp', '0.1.0');
-$app->add(new RoutesListCommand($kernel));
-// ... add your own commands + the discoverers' output
+$app->add(new \Nqphp\Core\Routing\RoutesListCommand($kernel));
+$app->add(new \Nqphp\Core\Scheduler\ScheduleListCommand($schedDiscoverer));
+$app->add(new \Nqphp\Core\Scheduler\ScheduleRunCommand($schedDiscoverer));
+$app->add(new \Nqphp\Core\Config\FeatureListCommand($kernel));
+foreach ($cmdDiscoverer->discover() as $cmd) { $app->add($cmd); }
 $app->run();
 ```
 
@@ -121,19 +130,17 @@ and are discovered at boot.)
 
 ## Phase 2 status (framework-side)
 
-* ✅ `#[AsCommand]` CLI command auto-discovery (`2be0a72`).
-* ✅ JS-module runtime helper (`b842bd1`) — framework `csrf()`,
-  `fetchJson()`, per-feature `client.js` serving.
-* ✅ Middleware pipeline (`53cf94c` / `be81005` / `424a354` /
-  `6df392f`) — `#[Middleware]` attribute + `MiddlewareDiscoverer` +
-  Kernel runtime invocation + 4 tests.
-* ✅ `#[Schedule]` cron + Symfony Scheduler integration (`475fe0b` /
-  `04d0799` / `5c0ab05`) — discover + list + run via the real
-  Symfony Scheduler evaluator.
-* ✅ Per-feature `config.php` autoloader (`fabd4d5`) — typed
-  config reads + `Kernel::config(string $feature, string $key, $default)`.
-* ✅ `bin/console feature:list` (`0a8cd28`) — per-feature inventory.
-* ✅ PHP CS Fixer (`cf4f33a`) — `composer cs:check` / `cs:fix`, CI step.
+* ✅ `#[AsCommand]` CLI command auto-discovery.
+* ✅ JS-module runtime helper — framework `csrf()`, `fetchJson()`,
+  per-feature `client.js` serving.
+* ✅ Middleware pipeline — `#[Middleware]` attribute + auto-discovery
+  + Kernel runtime invocation + tests.
+* ✅ `#[Schedule]` cron + Symfony Scheduler integration — discover +
+  list + run via the real Symfony Scheduler evaluator.
+* ✅ Per-feature `config.php` autoloader — typed config reads +
+  `Kernel::config(string $feature, string $key, $default)`.
+* ✅ `bin/console feature:list` — per-feature inventory.
+* ✅ PHP CS Fixer — `composer cs:check` / `cs:fix`, CI step.
 
 Open Phase 2 follow-ups (not yet shipped, lower priority):
 
