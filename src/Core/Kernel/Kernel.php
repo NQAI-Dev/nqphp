@@ -96,7 +96,17 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
         ]);
-        $this->entityManager = new EntityManager($this->entityDiscoverer);
+        // Default driver: SqliteDriver (in-memory or file-backed).
+        // Overridable via env: NQPHP_DRIVER=memory → InMemoryDriver (faster, ephemeral).
+        $this->driver = ($_SERVER['NQPHP_DRIVER'] ?? '') === 'memory'
+            ? new InMemoryDriver()
+            : new SqliteDriver(new PDO(
+                $_SERVER['NQPHP_SQLITE_PATH'] ?? 'sqlite::memory:'
+            ));
+        $this->entityManager = new EntityManager(
+            $this->entityDiscoverer,
+            $this->driver
+        );
         $this->urlGenerator = new KernelUrlGenerator(
             $this->router->discover()  // eager snapshot — RouteCollection is small
         );
