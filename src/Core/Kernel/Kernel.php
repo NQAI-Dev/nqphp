@@ -19,8 +19,10 @@ use Nqphp\Core\Routing\KernelUrlGenerator;
 use Nqphp\Core\Middleware\RouteHookDiscoverer;
 use Nqphp\Core\Routing\Router;
 use Nqphp\Core\Security\CsrfTokenManager;
+use Nqphp\Core\Controller\AbstractController;
 use Nqphp\Core\Service\ServiceDiscoverer;
 use PDO;
+use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -191,9 +193,25 @@ final class Kernel implements HttpKernelInterface
         return $this->serviceDiscoverer;
     }
 
-    /** In-memory entity store accessor. Save / find / findAll / delete
-     *  for any #[Entity]-discovered class. Lightweight Phase 2 half;
-     *  swap impl for Doctrine later. */
+    /**
+     * Primary accessor for the ORM. Returns the EntityManager (which
+     * delegates to the configured DriverInterface — in-memory for
+     * tests / one-shot CLI, SQLite-backed for production).
+     *
+     * The legacy entityStore() alias is kept below for one minor
+     * release to ease the rename migration; callers should switch
+     * to entityManager().
+     */
+    public function entityManager(): EntityManager
+    {
+        return $this->entityManager;
+    }
+
+    /**
+     * @deprecated Use entityManager() — EntityStore was the Phase 1
+     * in-memory stub, renamed to EntityManager in Phase 2 when the
+     * DriverInterface was added.
+     */
     public function entityStore(): EntityStore
     {
         return $this->entityManager;
@@ -348,7 +366,23 @@ final class Kernel implements HttpKernelInterface
             return $this->withCsrfCookie($request, new Response(sprintf('Class %s not found', $class), 500));
         }
 
+        // Controllers extending AbstractController need the Kernel
+        // for $this->kernel->entityManager() etc. We use the kernel
+        // accessor to build the instance, which also lets non-
+        // AbstractController controllers (plain classes) be
+        // instantiated without args — newInstanceArgs([]) handles both.
         $instance = new $class();
+        if ($instance instanceof AbstractController) {
+            // Re-bind the kernel property so subclasses see a non-null
+            // reference. Simpler than reflection injection — works for
+            // any AbstractController subclass regardless of inheritance.
+            $ref = new ReflectionClass($instance);
+            if ($ref->hasProperty('kernel')) {
+                $kernelProp = $ref->getProperty('kernel');
+                $kernelProp->setAccessible(true);
+                $kernelProp->setValue($instance, $this);
+            }
+        }
         if (!method_exists($instance, $method)) {
             return $this->withCsrfCookie($request, new Response(sprintf('Method %s::%s not found', $class, $method), 500));
         }
