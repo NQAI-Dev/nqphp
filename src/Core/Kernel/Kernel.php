@@ -49,7 +49,7 @@ final class Kernel implements HttpKernelInterface
     private readonly EntityDiscoverer $entityDiscoverer;
 
     /** @var \Nqphp\Core\Entity\EntityStore */
-    private readonly EntityStore $entityStore;
+    private readonly EntityManager $entityManager;
 
     /** @var \Nqphp\Core\Routing\UrlGenerator */
     private readonly KernelUrlGenerator $urlGenerator;
@@ -96,7 +96,7 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
         ]);
-        $this->entityStore = new EntityStore($this->entityDiscoverer);
+        $this->entityManager = new EntityManager($this->entityDiscoverer);
         $this->urlGenerator = new KernelUrlGenerator(
             $this->router->discover()  // eager snapshot — RouteCollection is small
         );
@@ -172,7 +172,7 @@ final class Kernel implements HttpKernelInterface
      *  swap impl for Doctrine later. */
     public function entityStore(): EntityStore
     {
-        return $this->entityStore;
+        return $this->entityManager;
     }
 
     /** RouteHookDiscoverer accessor for tests / introspection. */
