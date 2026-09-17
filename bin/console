@@ -82,6 +82,107 @@ final class ScheduleListCommand extends \Symfony\Component\Console\Command\Comma
     }
 }
 
+final class ScheduleRunCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly \Nqphp\Core\Scheduler\ScheduleDiscoverer $discoverer)
+    {
+        parent::__construct('schedule:run', 'Run scheduled tasks whose cron is due right now.');
+    }
+
+    protected function configure(): void
+    {
+        $this->addArgument('name', \Symfony\Component\Console\Input\InputArgument::OPTIONAL, 'Run only this schedule by name.');
+        $this->addOption('force', 'f', \Symfony\Component\Console\Input\InputOption::VALUE_NONE, 'Run all schedules regardless of cron (dry-run alternative).');
+    }
+
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $schedules = $this->discoverer->discover()->all();
+        if (\count($schedules) === 0) {
+            $output->writeln('<comment>(no schedules configured)</comment>');
+            return self::SUCCESS;
+        }
+
+        $targetName = $input->getArgument('name');
+        $force = (bool) $input->getOption('force');
+        $ran = 0;
+        $errors = 0;
+
+        foreach ($schedules as $s) {
+            if ($targetName !== null && $s['name'] !== $targetName) {
+                continue;
+            }
+            if (!$force && !$this->isDue($s['cron'])) {
+                continue;
+            }
+            $output->writeln(sprintf('  <info>running</info> %s — %s', $s['name'], $s['cron']));
+            try {
+                [$_cls, $method] = $s['callable'];
+                $_cls::$method();
+                $ran++;
+            } catch (\Throwable $e) {
+                $output->writeln(sprintf('    <error>FAIL</error>: %s', $e->getMessage()));
+                $errors++;
+            }
+        }
+
+        if ($ran === 0) {
+            $output->writeln('<comment>(no schedules due — pass --force to run all)</comment>');
+        } else {
+            $output->writeln(sprintf('<info>ran %d schedule(s), %d error(s)</info>', $ran, $errors));
+        }
+        return $errors === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * Minimal cron-due check: returns true if the current minute
+     * matches any minute in the 5-field cron expression. Real apps
+     * should rely on symfony/scheduler's full RecurringMessage
+     * evaluator (Phase 2 #5).
+     *
+     * Supports simple expressions: "*", "*/N", and a single integer
+     * for each of (minute, hour, dom, month, dow). Anything more
+     * complex returns true (conservative: "always due"). That's good
+     * enough for the Phase 2 #4 discovery-side wiring — the real
+     * cron parsing happens in schedule:run when it imports the
+     * scheduled task into a symfony/scheduler Schedule object.
+     */
+    private function isDue(string $cron): bool
+    {
+        $parts = preg_split('/\s+/', trim($cron));
+        if (\count($parts) !== 5) {
+            return true;  // unknown form → assume due
+        }
+        [$min, $hour, $dom, $month, $dow] = $parts;
+        $now = getdate();
+        return $this->fieldMatches($min, $now['minutes'])
+            && $this->fieldMatches($hour, $now['hours'])
+            && $this->fieldMatches($dom, $now['mday'])
+            && $this->fieldMatches($month, $now['mon'])
+            && $this->fieldMatches($dow, $now['wday']);
+    }
+
+    private function fieldMatches(string $field, int $value): bool
+    {
+        if ($field === '*') {
+            return true;
+        }
+        foreach (explode(',', $field) as $token) {
+            if (str_starts_with($token, '*/')) {
+                $step = (int) substr($token, 2);
+                if ($step > 0 && $value % $step === 0) {
+                    return true;
+                }
+                continue;
+            }
+            if ((int) $token === $value) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 $projectDir = dirname(__DIR__);
 $kernel = new Kernel($projectDir);
 
@@ -97,6 +198,7 @@ $schedDiscoverer = new \Nqphp\Core\Scheduler\ScheduleDiscoverer([
 $app = new Application('nqphp', '0.2.0-dev');
 $app->add(new RoutesListCommand($kernel));
 $app->add(new ScheduleListCommand($schedDiscoverer));
+$app->add(new ScheduleRunCommand($schedDiscoverer));
 foreach ($cmdDiscoverer->discover() as $command) {
     $app->add($command);
 }
