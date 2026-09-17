@@ -219,6 +219,81 @@ final class EntityListCommand extends \Symfony\Component\Console\Command\Command
     }
 }
 
+final class FeatureShowCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly Kernel $kernel)
+    {
+        parent::__construct('feature:show', 'Show detailed info (config + routes + middlewares + commands) for one feature.');
+    }
+
+    protected function configure(): void
+    {
+        $this->addArgument('name', \Symfony\Component\Console\Input\InputArgument::REQUIRED, 'The feature name (e.g. "Hello").');
+    }
+
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $name = $input->getArgument('name');
+        $features = $this->kernel->featureConfig()->load()->features();
+        if (!\in_array($name, $features, true)) {
+            $output->writeln(sprintf('<error>Feature "%s" not discovered.</error>', $name));
+            $output->writeln('<comment>Known features:</comment>');
+            foreach ($features as $known) {
+                $output->writeln('  ' . $known);
+            }
+            return self::FAILURE;
+        }
+
+        $output->writeln(sprintf('<info>Feature: %s</info>', $name));
+
+        // Config
+        $output->writeln('  config:');
+        $config = $this->kernel->featureConfig()->all($name);
+        if (\count($config) === 0) {
+            $output->writeln('    <comment>(no config.php)</comment>');
+        } else {
+            foreach ($config as $key => $value) {
+                $output->writeln(sprintf('    %s = %s', $key, \is_scalar($value) ? \var_export($value, true) : \json_encode($value)));
+            }
+        }
+
+        // Routes (filter by feature-name prefix)
+        $output->writeln('  routes:');
+        $routes = $this->kernel->getRouteCollection();
+        $matched = [];
+        foreach ($routes->all() as $rname => $route) {
+            if (str_starts_with($rname, $name . ':')) {
+                $matched[$rname] = $route;
+            }
+        }
+        if (\count($matched) === 0) {
+            $output->writeln('    <comment>(none)</comment>');
+        } else {
+            foreach ($matched as $rname => $route) {
+                $output->writeln(sprintf('    %s → %s %s', $rname, $route->getPath(), implode('|', $route->getMethods() ?: ['ANY'])));
+            }
+        }
+
+        // Middlewares (filter by feature-name prefix)
+        $output->writeln('  middlewares:');
+        $matched = [];
+        foreach ($this->kernel->middlewareDiscoverer()->discover()->all() as $mw) {
+            if (str_starts_with($mw['name'], $name . ':')) {
+                $matched[] = $mw;
+            }
+        }
+        if (\count($matched) === 0) {
+            $output->writeln('    <comment>(none)</comment>');
+        } else {
+            foreach ($matched as $mw) {
+                $output->writeln(sprintf('    %s (order=%d)', $mw['name'], $mw['order']));
+            }
+        }
+
+        return self::SUCCESS;
+    }
+}
+
 final class FeatureListCommand extends \Symfony\Component\Console\Command\Command
 {
     public function __construct(private readonly Kernel $kernel)
@@ -293,6 +368,7 @@ $app->add(new ScheduleListCommand($schedDiscoverer));
 $app->add(new ScheduleRunCommand($schedDiscoverer));
 $app->add(new FeatureListCommand($kernel));
 $app->add(new EntityListCommand($kernel));
+$app->add(new FeatureShowCommand($kernel));
 $app->add(new ServiceListCommand($kernel));
 foreach ($cmdDiscoverer->discover() as $command) {
     $app->add($command);
