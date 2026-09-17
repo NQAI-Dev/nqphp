@@ -51,6 +51,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Entity\EntityStore */
     private readonly EntityStore $entityStore;
 
+    /** @var \Nqphp\Core\Middleware\RouteHookDiscoverer */
+    private readonly RouteHookDiscoverer $routeHookDiscoverer;
+
     /** @var \Nqphp\Core\Config\ConfigSchemaDiscoverer */
     private readonly ConfigSchemaDiscoverer $configSchemaDiscoverer;
 
@@ -85,6 +88,10 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->entityStore = new EntityStore($this->entityDiscoverer);
+        $this->routeHookDiscoverer = new RouteHookDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ]);
         $this->configSchemaDiscoverer = new ConfigSchemaDiscoverer([
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
@@ -147,6 +154,12 @@ final class Kernel implements HttpKernelInterface
     public function entityStore(): EntityStore
     {
         return $this->entityStore;
+    }
+
+    /** RouteHookDiscoverer accessor for tests / introspection. */
+    public function routeHookDiscoverer(): RouteHookDiscoverer
+    {
+        return $this->routeHookDiscoverer;
     }
 
     /** EntityDiscoverer accessor for tests / introspection. */
@@ -215,6 +228,25 @@ final class Kernel implements HttpKernelInterface
             $params = $matcher->match($request->getPathInfo());
         } catch (ResourceNotFoundException $e) {
             return $this->withCsrfCookie($request, new Response('Not Found', 404));
+        }
+
+        // BeforeRoute hooks: invoked after route match, before
+        // controller dispatch. Walk the discovered handlers, filter
+        // by glob pattern (path) + optional HTTP method, invoke in
+        // declaration order. Any handler returning a Response
+        // short-circuits the rest of the pipeline (terminal).
+        foreach ($this->routeHookDiscoverer->discover()->before() as $hook) {
+            if (!fnmatch($hook['pattern'], $request->getPathInfo())) {
+                continue;
+            }
+            if ($hook['httpMethod'] !== null && $hook['httpMethod'] !== $request->getMethod()) {
+                continue;
+            }
+            [$cls, $method] = $hook['callable'];
+            $result = $cls::$method($request);
+            if ($result instanceof Response) {
+                return $this->withCsrfCookie($request, $result);
+            }
         }
 
         [$class, $method] = explode('::', $params['_controller'], 2);
