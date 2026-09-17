@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Attribute\Controller as ControllerAttr;
-use Nqphp\Core\Attribute\Route as RouteAttr;
 use Nqphp\Core\Kernel\Kernel;
 use Nqphp\Core\Routing\Router;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 /**
- * Tests for Kernel::url() and the underlying UrlGenerator.
+ * Tests for Kernel::url() and the underlying KernelUrlGenerator.
  *
  * Sets up an inline Controller + Router so we have named routes to
  * generate URLs for.
  */
-final class UrlGeneratorTest extends TestCase
+final class KernelUrlGeneratorTest extends TestCase
 {
     private const PROJECT_DIR = __DIR__ . '/..';
 
