@@ -45,6 +45,12 @@ final class Kernel implements HttpKernelInterface
     /** @var array<string, object> Singleton cache: name → instantiated service */
     private array $serviceInstances = [];
 
+    /** @var \Nqphp\Core\Entity\EntityDiscoverer */
+    private readonly EntityDiscoverer $entityDiscoverer;
+
+    /** @var \Nqphp\Core\Entity\EntityStore */
+    private readonly EntityStore $entityStore;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -68,6 +74,11 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
         ]);
+        $this->entityDiscoverer = new EntityDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ]);
+        $this->entityStore = new EntityStore($this->entityDiscoverer);
         $this->csrf = $csrf;
         $this->js = $js;
     }
@@ -117,6 +128,20 @@ final class Kernel implements HttpKernelInterface
     public function serviceDiscoverer(): ServiceDiscoverer
     {
         return $this->serviceDiscoverer;
+    }
+
+    /** In-memory entity store accessor. Save / find / findAll / delete
+     *  for any #[Entity]-discovered class. Lightweight Phase 2 half;
+     *  swap impl for Doctrine later. */
+    public function entityStore(): EntityStore
+    {
+        return $this->entityStore;
+    }
+
+    /** EntityDiscoverer accessor for tests / introspection. */
+    public function entityDiscoverer(): EntityDiscoverer
+    {
+        return $this->entityDiscoverer;
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
