@@ -14,8 +14,8 @@ use Symfony\Component\Console\Application;
  *
  * Phase 2: routes the framework to a real Symfony Console Application.
  * Commands are discovered from `#[AsCommand]` attributes across:
- *   - src/Feature/*/Command/*.php   (project commands)
- *   - src/Core/Command/*.php        (framework commands, future)
+ *   - src/Feature/<Feature>/Command/<File>.php   (project commands)
+ *   - src/Core/Command/<File>.php        (framework commands, future)
  *
  * The legacy hand-rolled `routes:list` is preserved as a built-in
  * command so CI can still validate the route surface without registering
