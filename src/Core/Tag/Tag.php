@@ -65,4 +65,22 @@ final class Tag
     {
         return new Hr();
     }
+
+    /** @return Input a fresh, empty <input> builder (self-closing). */
+    public static function input(): Input
+    {
+        return new Input();
+    }
+
+    /** @return Textarea a fresh, empty <textarea> builder. */
+    public static function textarea(): Textarea
+    {
+        return new Textarea();
+    }
+
+    /** @return Label a fresh, empty <label> builder. */
+    public static function label(): Label
+    {
+        return new Label();
+    }
 }

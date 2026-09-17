@@ -132,3 +132,74 @@ class VoidTagsTest extends \PHPUnit\Framework\TestCase
         self::assertInstanceOf(\Nqphp\Core\Tag\Hr::class, \Nqphp\Core\Tag\Tag::hr());
     }
 }
+
+class FormInputTagsTest extends \PHPUnit\Framework\TestCase
+{
+    public function testInputTextShortcut(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::text('username', 'alice', 'login placeholder');
+        self::assertSame(
+            '<input type="text" name="username" value="alice" placeholder="login placeholder">',
+            $i->toHtml()
+        );
+    }
+
+    public function testInputEmailRequired(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::email('email', '', true);
+        self::assertSame(
+            '<input type="email" name="email" value="" required="required">',
+            $i->toHtml()
+        );
+    }
+
+    public function testInputPassword(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::password('pwd');
+        self::assertSame('<input type="password" name="pwd" value="">', $i->toHtml());
+    }
+
+    public function testInputHidden(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::hidden('csrf', 'tokenvalue');
+        self::assertSame('<input type="hidden" name="csrf" value="tokenvalue">', $i->toHtml());
+    }
+
+    public function testInputSubmit(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::submit('Save');
+        self::assertSame('<input type="submit" name="" value="Save">', $i->toHtml());
+    }
+
+    public function testInputOfGeneric(): void
+    {
+        $i = \Nqphp\Core\Tag\Input::of('number', 'age', '30', ['min' => '0', 'max' => '120']);
+        self::assertSame(
+            '<input type="number" name="age" value="30" min="0" max="120">',
+            $i->toHtml()
+        );
+    }
+
+    public function testTextareaShortcut(): void
+    {
+        $t = \Nqphp\Core\Tag\Textarea::of('body', '<p>Hello</p>', ['rows' => '10', 'cols' => '80']);
+        // Content gets escaped — caller passed literal HTML
+        self::assertStringContainsString('&lt;p&gt;Hello&lt;/p&gt;', $t->toHtml());
+        self::assertStringContainsString('name="body"', $t->toHtml());
+        self::assertStringContainsString('rows="10"', $t->toHtml());
+        self::assertStringContainsString('cols="80"', $t->toHtml());
+    }
+
+    public function testLabelForShortcut(): void
+    {
+        $l = \Nqphp\Core\Tag\Label::for('username', 'Username');
+        self::assertSame('<label for="username">Username</label>', $l->toHtml());
+    }
+
+    public function testTagFactoryHasFormTags(): void
+    {
+        self::assertInstanceOf(\Nqphp\Core\Tag\Input::class, \Nqphp\Core\Tag\Tag::input());
+        self::assertInstanceOf(\Nqphp\Core\Tag\Textarea::class, \Nqphp\Core\Tag\Tag::textarea());
+        self::assertInstanceOf(\Nqphp\Core\Tag\Label::class, \Nqphp\Core\Tag\Tag::label());
+    }
+}
