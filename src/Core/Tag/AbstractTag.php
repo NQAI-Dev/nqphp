@@ -47,7 +47,11 @@ abstract class AbstractTag
 
     /** Set a single attribute. Replaces existing value if the key
      *  was set before. Attribute names are stored as-given (caller
-     *  controls case — most HTML5 attribute names are lowercase). */
+     *  controls case — most HTML5 attribute names are lowercase).
+     *
+     * @param string $name  Attribute name (e.g. "id", "data-x").
+     * @param string $value Attribute value (auto-escaped on render).
+     * @return static       The same tag instance, for fluent chaining. */
     public function setAttribute(string $name, string $value): static
     {
         $this->attrs[$name] = $value;
@@ -55,7 +59,10 @@ abstract class AbstractTag
     }
 
     /** Set many attributes at once. Useful for unpacking $_POST
-     *  data when building form-input attributes. */
+     *  data when building form-input attributes.
+     *
+     * @param array<string, string> $attrs attribute map (key → value).
+     * @return static the same tag instance. */
     public function setAttributes(array $attrs): static
     {
         foreach ($attrs as $name => $value) {
@@ -65,7 +72,10 @@ abstract class AbstractTag
     }
 
     /** Add CSS class names. Multiple invocations accumulate
-     *  (preserving order); duplicate names are deduplicated. */
+     *  (preserving order); duplicate names are deduplicated.
+     *
+     * @param string ...$names CSS class names to add.
+     * @return static         the same tag instance. */
     public function setClass(string ...$names): static
     {
         foreach ($names as $name) {
@@ -76,7 +86,10 @@ abstract class AbstractTag
         return $this;
     }
 
-    /** Replace the entire class list. */
+    /** Replace the entire class list.
+     *
+     * @param string[] $names new class list (replaces any existing).
+     * @return static         the same tag instance. */
     public function setClasses(array $names): static
     {
         $this->classes = [];
@@ -85,14 +98,20 @@ abstract class AbstractTag
 
     /** Set the inner content. Pass-through escape — caller is
      *  responsible for any HTML they want embedded (e.g. from a
-     *  template engine). Plain text is auto-escaped. */
+     *  template engine). Plain text is auto-escaped.
+     *
+     * @param string $content inner HTML/text (auto-escaped on render).
+     * @return static        the same tag instance. */
     public function setContent(string $content): static
     {
         $this->content = $content;
         return $this;
     }
 
-    /** Render the tag. HTML-escapes attribute values and content. */
+    /** Render the tag. HTML-escapes attribute values and content.
+     *
+     * @return string HTML string (`<tag ...>content</tag>` for paired
+     *                tags, `<tag ...>` for void/self-closing tags). */
     public function toHtml(): string
     {
         $attrParts = [];
@@ -121,7 +140,9 @@ abstract class AbstractTag
         return '<' . $this->tag . $attrString . '>' . self::escape($this->content) . '</' . $this->tag . '>';
     }
 
-    /** PHP's __toString — useful for echo Tag::div(). */
+    /** PHP's __toString — useful for `echo Tag::div();`
+     *
+     * @return string same as toHtml(). */
     public function __toString(): string
     {
         return $this->toHtml();
