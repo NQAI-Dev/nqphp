@@ -51,6 +51,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Entity\EntityStore */
     private readonly EntityStore $entityStore;
 
+    /** @var \Nqphp\Core\Routing\UrlGenerator */
+    private readonly UrlGenerator $urlGenerator;
+
     /** @var \Nqphp\Core\Middleware\RouteHookDiscoverer */
     private readonly RouteHookDiscoverer $routeHookDiscoverer;
 
@@ -91,6 +94,9 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->entityStore = new EntityStore($this->entityDiscoverer);
+        $this->urlGenerator = new UrlGenerator(
+            $this->router->discover()  // eager snapshot — RouteCollection is small
+        );
         $this->routeHookDiscoverer = new RouteHookDiscoverer([
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
@@ -188,6 +194,27 @@ final class Kernel implements HttpKernelInterface
     public function entityDiscoverer(): EntityDiscoverer
     {
         return $this->entityDiscoverer;
+    }
+
+    /** Generate a URL for a named route.
+     *
+     * @param string                       $name     the route name (e.g. "blog:post:show").
+     * @param array<string, mixed>         $params   path placeholders + query strings.
+     * @param bool                         $absolute true → full URL with scheme + host,
+     *                                              false (default) → path only.
+     * @param array{scheme?: string, host?: string, https?: bool}|null $override
+     *                                              scheme/host override for absolute URLs
+     *                                              in different domains / for canonicalisation.
+     * @return string the generated URL. */
+    public function url(string $name, array $params = [], bool $absolute = false, ?array $override = null): string
+    {
+        return $this->urlGenerator->generate($name, $params, $absolute, $override);
+    }
+
+    /** UrlGenerator accessor for tests / introspection. */
+    public function urlGenerator(): UrlGenerator
+    {
+        return $this->urlGenerator;
     }
 
     /** Typed config accessor. Pass a `#[ConfigKey]` schema class; get
