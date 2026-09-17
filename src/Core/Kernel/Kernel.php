@@ -7,7 +7,7 @@ namespace Nqphp\Core\Kernel;
 use Nqphp\Core\Config\ConfigSchemaDiscoverer;
 use Nqphp\Core\Config\ConfigStore;
 use Nqphp\Core\Config\FeatureConfig;
-use Nqphp\Core\DependencyInjection\FeatureContainer;
+use Nqphp\Core\Container\FeatureContainer;
 use Nqphp\Core\Entity\Driver\InMemoryDriver;
 use Nqphp\Core\Entity\Driver\SqliteDriver;
 use Nqphp\Core\Entity\EntityDiscoverer;
