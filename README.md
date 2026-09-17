@@ -162,12 +162,17 @@ final class User
     #[Id]
     public ?int $id = null;
 
-    #[Column(name: 'email', length: 255)]
+    // UNIQUE constraint enforced by SqliteDriver (Phase 2 #10 extension):
+    // duplicates raise PDOException "UNIQUE constraint failed: user.email".
+    #[Column(name: 'email', length: 255, unique: true)]
     public string $email = '';
 
     #[Column(name: 'created_at')]
     public \DateTimeImmutable $createdAt;
 
+    // #[Where] marks the property as filterable with the named SQL
+    // operator; the actual operator at query-time is taken from the
+    // criterion shape passed to findBy/findOneBy/count.
     #[Where(operator: 'LIKE')]
     public string $displayName = '';
 }
@@ -199,6 +204,11 @@ $em->findBy(User::class, ['displayName' => ['LIKE' => 'ali%']]);
 $em->findBy(User::class, ['id' => ['IN' => [1, 2, 3]]]);
 $em->findBy(User::class, ['email' => ['BETWEEN' => ['a@x.com', 'z@x.com']]]);
 $em->findBy(User::class, ['createdAt' => ['>=' => '2024-01-01']]);
+
+// count() accepts the same operator-aware criteria
+$em->count(User::class);                                    // total
+$em->count(User::class, ['email' => ['LIKE' => '%@x.com']]);
+$em->count(User::class, ['id' => ['IN' => [1, 2, 3]]]);
 ```
 
 ### Choosing a driver
@@ -227,6 +237,34 @@ $em = new EntityManager(
 
 Both drivers implement `Nqphp\Core\Entity\Driver\DriverInterface`,
 so swapping is a one-line change at the wiring layer.
+
+### Schema constraints
+
+`#[Column]` supports metadata that `SqliteDriver::ensureSchema()`
+translates into SQL DDL:
+
+| Column attribute | SQLite DDL |
+| --- | --- |
+| `#[Column(type: 'string')]` | `TEXT` |
+| `#[Column(type: 'string', length: 255)]` | `TEXT` (length is application-side, SQLite ignores) |
+| `#[Column(type: 'integer')]` | `INTEGER` |
+| `#[Column(type: 'float')]` | `REAL` |
+| `#[Column(type: 'boolean')]` | `INTEGER` (0/1) |
+| `#[Column(type: 'datetime')]` | `TEXT` (ISO-8601) |
+| `#[Column(type: 'json')]` | `TEXT` (JSON-encoded) |
+| `#[Column(nullable: true)]` | column allows NULL |
+| `#[Column(nullable: false)]` | `NOT NULL` (the default) |
+| `#[Column(unique: true)]` | `NOT NULL UNIQUE` (Phase 2 #10 extension) |
+
+Multiple `#[Column(unique: true)]` in the same entity become multiple
+UNIQUE constraints (enforced independently by SQLite). Combined with
+`#[Id]` as primary key, this gives a complete schema layer without
+writing migration files.
+
+`InMemoryDriver` ignores schema entirely (no-op) — only `SqliteDriver`
+generates DDL. Schema is dropped and re-created on each
+`ensureSchema()` call; real migrations (alter-table, add-column
+without data loss) come in a Phase 2 follow-up.
 
 ### Why not Doctrine?
 
