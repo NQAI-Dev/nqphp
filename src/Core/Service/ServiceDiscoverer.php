@@ -84,7 +84,7 @@ final class ServiceDiscoverer
     private function loadFile(string $path): void
     {
         $contents = (string) file_get_contents($path);
-        if (!preg_match('/^<\?php\s*namespace\s+([\\\\\w\\\\]+);/m', $contents, $ns)) {
+        if (!preg_match('/^\s*namespace\s+([\w\\\\]+);/m', $contents, $ns)) {
             return;
         }
         $namespace = trim($ns[1], '\\');

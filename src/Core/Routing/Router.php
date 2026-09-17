@@ -66,7 +66,7 @@ final class Router
         // definition in a fresh namespace. We use Reflection on the
         // namespace + class names found in the file's source instead
         // — far simpler than building a full PSR-4 loader.
-        if (!preg_match('/^<\?php\s*namespace\s+([\\\\\w\\\\]+);/m', $contents, $ns)) {
+        if (!preg_match('/^\s*namespace\s+([\w\\\\]+);/m', $contents, $ns)) {
             return;
         }
         $namespace = trim($ns[1], '\\');

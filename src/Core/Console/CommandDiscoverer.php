@@ -75,7 +75,7 @@ final class CommandDiscoverer
         if ($contents === false) {
             return;
         }
-        if (!preg_match('/^<\?php\s*namespace\s+([\\\\\w]+);/m', $contents, $ns)) {
+        if (!preg_match('/^\s*namespace\s+([\w\\\\]+);/m', $contents, $ns)) {
             return;
         }
         $namespace = trim($ns[1], '\\');
