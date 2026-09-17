@@ -108,12 +108,30 @@ final class ScheduleRunCommand extends \Symfony\Component\Console\Command\Comman
         $ran = 0;
         $errors = 0;
 
+        // Real cron parser via Symfony Scheduler's RecurringMessage.
+        // Replaces the hand-rolled isDue() / fieldMatches() pair from
+        // 04d0799, which only supported "*", "*/N", single integers,
+        // and comma-lists. Symfony Scheduler handles every expression
+        // Symfony accepts (ranges like "1-5", weekday abbreviations
+        // like "MON-FRI", L/W modifiers).
+        $scheduler = new \Symfony\Component\Scheduler\Scheduler();
+        $nowMs = (int) (microtime(true) * 1000);
+
         foreach ($schedules as $s) {
             if ($targetName !== null && $s['name'] !== $targetName) {
                 continue;
             }
-            if (!$force && !$this->isDue($s['cron'])) {
-                continue;
+            if (!$force) {
+                try {
+                    $msg = \Symfony\Component\Scheduler\RecurringMessage::cron($s['cron']);
+                } catch (\Throwable $e) {
+                    $output->writeln(sprintf('    <error>parse FAIL</error> for %s: %s', $s['cron'], $e->getMessage()));
+                    $errors++;
+                    continue;
+                }
+                if (!$scheduler->isDue($msg, $nowMs)) {
+                    continue;
+                }
             }
             $output->writeln(sprintf('  <info>running</info> %s — %s', $s['name'], $s['cron']));
             try {
@@ -132,54 +150,6 @@ final class ScheduleRunCommand extends \Symfony\Component\Console\Command\Comman
             $output->writeln(sprintf('<info>ran %d schedule(s), %d error(s)</info>', $ran, $errors));
         }
         return $errors === 0 ? self::SUCCESS : self::FAILURE;
-    }
-
-    /**
-     * Minimal cron-due check: returns true if the current minute
-     * matches any minute in the 5-field cron expression. Real apps
-     * should rely on symfony/scheduler's full RecurringMessage
-     * evaluator (Phase 2 #5).
-     *
-     * Supports simple expressions: "*", "*/N", and a single integer
-     * for each of (minute, hour, dom, month, dow). Anything more
-     * complex returns true (conservative: "always due"). That's good
-     * enough for the Phase 2 #4 discovery-side wiring — the real
-     * cron parsing happens in schedule:run when it imports the
-     * scheduled task into a symfony/scheduler Schedule object.
-     */
-    private function isDue(string $cron): bool
-    {
-        $parts = preg_split('/\s+/', trim($cron));
-        if (\count($parts) !== 5) {
-            return true;  // unknown form → assume due
-        }
-        [$min, $hour, $dom, $month, $dow] = $parts;
-        $now = getdate();
-        return $this->fieldMatches($min, $now['minutes'])
-            && $this->fieldMatches($hour, $now['hours'])
-            && $this->fieldMatches($dom, $now['mday'])
-            && $this->fieldMatches($month, $now['mon'])
-            && $this->fieldMatches($dow, $now['wday']);
-    }
-
-    private function fieldMatches(string $field, int $value): bool
-    {
-        if ($field === '*') {
-            return true;
-        }
-        foreach (explode(',', $field) as $token) {
-            if (str_starts_with($token, '*/')) {
-                $step = (int) substr($token, 2);
-                if ($step > 0 && $value % $step === 0) {
-                    return true;
-                }
-                continue;
-            }
-            if ((int) $token === $value) {
-                return true;
-            }
-        }
-        return false;
     }
 }
 
