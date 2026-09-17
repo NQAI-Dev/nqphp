@@ -10,17 +10,17 @@
         "modular-monolith",
         "vertical-slice"
     ],
-    "require": [
-        "php",
-        "symfony/routing",
-        "symfony/http-kernel",
-        "symfony/http-foundation",
-        "symfony/console",
-        "symfony/dependency-injection",
-        "symfony/event-dispatcher",
-        "symfony/yaml",
-        "symfony/scheduler"
-    ],
+    "require": {
+        "php": "^8.4",
+        "symfony/routing": "^7.1",
+        "symfony/http-kernel": "^7.1",
+        "symfony/http-foundation": "^7.1",
+        "symfony/console": "^7.1",
+        "symfony/dependency-injection": "^7.1",
+        "symfony/event-dispatcher": "^7.1",
+        "symfony/yaml": "^7.1",
+        "symfony/scheduler": "^7.1"
+    },
     "require-dev": {
         "phpunit/phpunit": "^11.0",
         "symfony/var-dumper": "^7.1",
