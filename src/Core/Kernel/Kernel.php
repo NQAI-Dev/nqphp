@@ -54,6 +54,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Middleware\RouteHookDiscoverer */
     private readonly RouteHookDiscoverer $routeHookDiscoverer;
 
+    /** @var \Nqphp\Core\Input\RequestData */
+    private readonly RequestData $requestData;
+
     /** @var \Nqphp\Core\Config\ConfigSchemaDiscoverer */
     private readonly ConfigSchemaDiscoverer $configSchemaDiscoverer;
 
@@ -92,6 +95,10 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
         ]);
+        // Note: RequestData needs a Request — initialised to null,
+        // re-bound per request by the handle() method via
+        // $this->rebindRequest($request) below.
+        $this->requestData = new RequestData(new \Symfony\Component\HttpFoundation\Request());
         $this->configSchemaDiscoverer = new ConfigSchemaDiscoverer([
             $projectDir . '/src/Feature',
             $projectDir . '/src/Core',
@@ -160,6 +167,21 @@ final class Kernel implements HttpKernelInterface
     public function routeHookDiscoverer(): RouteHookDiscoverer
     {
         return $this->routeHookDiscoverer;
+    }
+
+    /** Input extractor accessor. Pass a `#[Input]`-annotated DTO class;
+     *  get back an instance hydrated from the current request (JSON
+     *  body / form fields / query string — first non-null wins per
+     *  field). */
+    public function input(string $dtoClass): object
+    {
+        return $this->requestData->extract($dtoClass);
+    }
+
+    /** RequestData accessor for tests / introspection. */
+    public function requestData(): RequestData
+    {
+        return $this->requestData;
     }
 
     /** EntityDiscoverer accessor for tests / introspection. */
