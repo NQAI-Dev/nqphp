@@ -11,7 +11,7 @@ use Nqphp\Core\Attribute\Entity as EntityAttr;
  *   - src/Feature/<Feature>/Entity/<File>.php   (project entities)
  *   - src/Core/Entity/*.php        (framework, future)
  *
- * Returns a name → class map so EntityStore can instantiate new
+ * Returns a name → class map so EntityManager can instantiate new
  * instances via `new $class()` and read/write public properties via
  * reflection (matching the attribute's "POPO with public props"
  * contract).

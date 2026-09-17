@@ -64,7 +64,7 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Entity\EntityDiscoverer */
     private readonly EntityDiscoverer $entityDiscoverer;
 
-    /** @var \Nqphp\Core\Entity\EntityStore */
+    /** @var \Nqphp\Core\Entity\EntityManager */
     private readonly EntityManager $entityManager;
 
     /** @var \Nqphp\Core\Routing\UrlGenerator */
@@ -203,16 +203,6 @@ final class Kernel implements HttpKernelInterface
      * to entityManager().
      */
     public function entityManager(): EntityManager
-    {
-        return $this->entityManager;
-    }
-
-    /**
-     * @deprecated Use entityManager() — EntityStore was the Phase 1
-     * in-memory stub, renamed to EntityManager in Phase 2 when the
-     * DriverInterface was added.
-     */
-    public function entityStore(): EntityStore
     {
         return $this->entityManager;
     }

@@ -13,10 +13,10 @@ namespace Nqphp\Core\Attribute;
  *   - src/Core/Entity/{File}.php             (framework, future)
  *
  * The class is expected to be a POPO with public properties (the
- * column shape). EntityStore reads/writes them via reflection; no
- * Doctrine or DB required. The whole point of this attribute is
+ * column shape). The EntityManager reads/writes them via reflection;
+ * no Doctrine or DB required. The whole point of this attribute is
  * to give features a typed data layer they can swap out later
- * (swap `EntityStore` impl → Doctrine bridge) without changing
+ * (swap `DriverInterface` impl → MySQL/Postgres) without changing
  * entity classes.
  *
  * Example:
@@ -27,7 +27,7 @@ namespace Nqphp\Core\Attribute;
  *       public string $name;
  *   }
  *
- * The `name` is the canonical handle used by EntityStore CRUD ops.
+ * The `name` is the canonical handle used by EntityManager CRUD ops.
  * Convention: lowercase singular noun (`user`, `post`, `comment`).
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
