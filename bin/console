@@ -52,17 +52,52 @@ final class RoutesListCommand extends \Symfony\Component\Console\Command\Command
     }
 }
 
+final class ScheduleListCommand extends \Symfony\Component\Console\Command\Command
+{
+    public function __construct(private readonly \Nqphp\Core\Scheduler\ScheduleDiscoverer $discoverer)
+    {
+        parent::__construct('schedule:list', 'List all scheduled tasks discovered from #[Schedule] attributes.');
+    }
+
+    protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
+    {
+        $schedules = $this->discoverer->discover()->all();
+        $output->writeln('<info>Discovered schedules</info>');
+        if (\count($schedules) === 0) {
+            $output->writeln('  <comment>(no schedules)</comment>');
+            return self::SUCCESS;
+        }
+        $rows = [];
+        $maxName = 0;
+        foreach ($schedules as $s) {
+            $maxName = max($maxName, \strlen($s['name']));
+            $rows[] = [$s['name'], $s['cron'], $s['description']];
+        }
+        \usort($rows, fn($a, $b) => $a[0] <=> $b[0]);
+        $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-25s  %s', 'NAME', 'CRON', 'DESCRIPTION'));
+        foreach ($rows as [$n, $c, $d]) {
+            $output->writeln(sprintf('  %-'.(int) $maxName.'s  %-25s  %s', $n, $c, $d));
+        }
+        return self::SUCCESS;
+    }
+}
+
 $projectDir = dirname(__DIR__);
 $kernel = new Kernel($projectDir);
 
-$discoverer = new CommandDiscoverer([
+$cmdDiscoverer = new CommandDiscoverer([
+    $projectDir . '/src/Feature',
+    $projectDir . '/src/Core',
+]);
+$schedDiscoverer = new \Nqphp\Core\Scheduler\ScheduleDiscoverer([
     $projectDir . '/src/Feature',
     $projectDir . '/src/Core',
 ]);
 
 $app = new Application('nqphp', '0.2.0-dev');
 $app->add(new RoutesListCommand($kernel));
-foreach ($discoverer->discover() as $command) {
+$app->add(new ScheduleListCommand($schedDiscoverer));
+foreach ($cmdDiscoverer->discover() as $command) {
     $app->add($command);
 }
 $app->setDefaultCommand('list', false);
