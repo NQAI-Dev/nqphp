@@ -107,17 +107,20 @@ final class SqliteDriver implements DriverInterface
         foreach ($columns as $name => $meta) {
             $type = $this->sqliteType($meta['type'] ?? 'string');
             $nullable = ($meta['nullable'] ?? false) ? '' : ' NOT NULL';
-            $this->schemas[$entityName][$name] = $type;
+            $unique = ($meta['unique'] ?? false) ? ' UNIQUE' : '';
+            $this->schemas[$entityName][$name] = $type . $nullable . $unique;
         }
         // Drop and re-create is the simplest schema-bootstrap for now.
         // Real migrations come in a follow-up commit.
         $this->pdo->exec("DROP TABLE IF EXISTS `$entityName`");
         $cols = ['id INTEGER PRIMARY KEY AUTOINCREMENT'];
-        foreach ($this->schemas[$entityName] as $name => $type) {
+        foreach ($this->schemas[$entityName] as $name => $def) {
             if ($name === 'id') {
                 continue;
             }
-            $cols[] = "`$name` $type" . $nullable;
+            // $def now includes "TYPE [NOT NULL] [UNIQUE]" — embedded space-separated
+            // form is valid SQLite column-constraint syntax.
+            $cols[] = "`$name` $def";
         }
         $this->pdo->exec("CREATE TABLE `$entityName` (" . implode(', ', $cols) . ')');
     }

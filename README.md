@@ -256,6 +256,8 @@ DBAL-style portability, swap the `EntityManager` wiring for
 * ✅ Custom ORM — `#[Id]`, `#[Column]`, `EntityManager` with
   `findBy` / `findOneBy` / `count` / `persist`, plus `DriverInterface`
   with `InMemoryDriver` (array) + `SqliteDriver` (PDO + SQLite).
+* ✅ `#[Column(unique: true)]` — UNIQUE column-constraint в SQLite
+  schema (Phase 2 #10 extension).
 * ✅ `#[Where]` attribute + operator-aware criteria — `LIKE`, `IN`,
   `BETWEEN`, `>=`, `<=`, `!=`, etc. on top of the exact-match API.
 * ✅ `bin/console entity:list` + `entity:show <name>` — entity

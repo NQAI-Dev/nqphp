@@ -42,11 +42,22 @@ final class Column
      * @param bool         $nullable Whether the column allows NULL.
      * @param int|null     $length   String column length (VARCHAR/CHAR).
      */
+    /**
+     * @param string|null $name     Column name (default: snake_case of the property name).
+     * @param string|null $type     Column type: 'string' | 'integer' | 'float' | 'boolean' | 'datetime' | 'json'.
+     *                              Null = inferred from the PHP property type.
+     * @param bool         $nullable Whether the column allows NULL.
+     * @param int|null     $length   String column length (VARCHAR/CHAR).
+     * @param bool         $unique   Whether the column has a UNIQUE constraint.
+     *                              SqliteDriver translates this to a UNIQUE column.
+     *                              No-op for InMemoryDriver (no schema).
+     */
     public function __construct(
         public readonly ?string $name = null,
         public readonly ?string $type = null,
         public readonly bool $nullable = false,
         public readonly ?int $length = null,
+        public readonly bool $unique = false,
     ) {
     }
 }
