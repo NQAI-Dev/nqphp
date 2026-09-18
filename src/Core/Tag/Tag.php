@@ -50,6 +50,9 @@ final class Tag
     }
 
     public static function span(array $attributes = [], string|AbstractTag|array $children = []): Span
+    {
+        return new Span($attributes, $children);
+    }
     public static function pre(array $attributes = [], string|AbstractTag|array $children = []): Pre
     {
         return new Pre($attributes, $children);
@@ -60,9 +63,6 @@ final class Tag
         return new Code($attributes, $children);
     }
 
-    {
-        return new Span($attributes, $children);
-    }
 
     public static function ul(array $attributes = [], string|AbstractTag|array $children = []): Ul
     {
