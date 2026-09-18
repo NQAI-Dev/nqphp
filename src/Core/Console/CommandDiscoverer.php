@@ -114,7 +114,7 @@ final class CommandDiscoverer
         $meta = $attrs[0]->newInstance();
 
         /** @var Command $instance */
-        $instance = new $fqcn();
+        try { $instance = new $fqcn(); } catch (\ArgumentCountError $e) { $instance = (new \ReflectionClass($fqcn))->newInstanceWithoutConstructor(); }
         $instance->setName($meta->name);
         if ($meta->description !== '') {
             $instance->setDescription($meta->description);

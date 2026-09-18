@@ -27,7 +27,9 @@ final class EntityListCommandTest extends TestCase
         // (Application::find picks by name but the command needs
         // Kernel injected via constructor).
         $cmdClass = new \ReflectionClass(\Nqphp\Core\Console\EntityListCommand::class);
-        $cmd = $cmdClass->newInstance($kernel);
+        $cmd = clone $cmdClass->newInstanceWithoutConstructor();
+        $cmd->__construct($kernel);
+        $cmd->setName("entity:list");
         $app->add($cmd);
 
         $tester = new CommandTester($app->find('entity:list'));
