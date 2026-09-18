@@ -240,7 +240,11 @@ $em = new EntityManager(
 ```
 
 Both drivers implement `Nqphp\Core\Entity\Driver\DriverInterface`,
-so swapping is a one-line change at the wiring layer.
+so swapping is a one-line change at the wiring layer. `EntityManager` maps
+property names to `#[Column(name: ...)]` names, serializes boolean, datetime,
+and JSON values before persistence, and hydrates typed entity properties on
+reads. Creating another manager over the same SQLite connection does not
+recreate or truncate existing tables.
 
 ### Schema constraints
 

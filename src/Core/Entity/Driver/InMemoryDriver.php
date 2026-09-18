@@ -25,10 +25,11 @@ final class InMemoryDriver implements DriverInterface
     public function persist(string $entityName, array $data): int
     {
         if (!isset($data['id'])) {
-            $data['id'] = $this->nextIds[$entityName] ??= 1;
+            $data['id'] = $this->nextIds[$entityName] ?? 1;
         }
         $id = (int) $data['id'];
         $this->rows[$entityName][$id] = $data;
+        $this->nextIds[$entityName] = max($this->nextIds[$entityName] ?? 1, $id + 1);
         return $id;
     }
 
@@ -45,7 +46,7 @@ final class InMemoryDriver implements DriverInterface
     public function findBy(string $entityName, array $criteria, array $orderBy = [], ?int $limit = null, ?int $offset = null): array
     {
         $rows = array_values($this->rows[$entityName] ?? []);
-        $rows = array_filter($rows, fn($row) => $this->matches($row, $criteria));
+        $rows = array_filter($rows, fn ($row) => $this->matches($row, $criteria));
         if (\count($orderBy) > 0) {
             usort($rows, static function (array $a, array $b) use ($orderBy): int {
                 foreach ($orderBy as $field => $direction) {
@@ -79,7 +80,7 @@ final class InMemoryDriver implements DriverInterface
         }
         $matches = array_filter(
             $this->rows[$entityName] ?? [],
-            fn($row) => $this->matches($row, $criteria)
+            fn ($row) => $this->matches($row, $criteria)
         );
         return \count($matches);
     }
@@ -120,36 +121,62 @@ final class InMemoryDriver implements DriverInterface
                 $op = \strtoupper((string) \array_key_first($value));
                 $operand = $value[$op];
                 switch ($op) {
-                    case '=': if ($cell !== $operand) return false; break;
-                    case '!=': if ($cell == $operand) return false; break;
-                    case '>': if (!($cell > $operand)) return false; break;
-                    case '<': if (!($cell < $operand)) return false; break;
-                    case '>=': if (!($cell >= $operand)) return false; break;
-                    case '<=': if (!($cell <= $operand)) return false; break;
+                    case '=': if ($cell !== $operand) {
+                        return false;
+                    } break;
+                    case '!=': if ($cell == $operand) {
+                        return false;
+                    } break;
+                    case '>': if (!($cell > $operand)) {
+                        return false;
+                    } break;
+                    case '<': if (!($cell < $operand)) {
+                        return false;
+                    } break;
+                    case '>=': if (!($cell >= $operand)) {
+                        return false;
+                    } break;
+                    case '<=': if (!($cell <= $operand)) {
+                        return false;
+                    } break;
                     case 'LIKE':
                         // SQL LIKE: % = any, _ = one. Convert to a tiny regex.
                         $regex = '';
                         $pattern = (string) $operand;
                         for ($i = 0; $i < \strlen($pattern); $i++) {
                             $c = $pattern[$i];
-                            if ($c === '%') { $regex .= '.*'; }
-                            elseif ($c === '_') { $regex .= '.'; }
-                            else { $regex .= \preg_quote($c, '/'); }
+                            if ($c === '%') {
+                                $regex .= '.*';
+                            } elseif ($c === '_') {
+                                $regex .= '.';
+                            } else {
+                                $regex .= \preg_quote($c, '/');
+                            }
                         }
-                        if (!\preg_match('/' . $regex . '/', (string) $cell)) return false;
+                        if (!\preg_match('/' . $regex . '/', (string) $cell)) {
+                            return false;
+                        }
                         break;
                     case 'IN':
-                        if (!\is_array($operand) || !\in_array($cell, $operand, false)) return false;
+                        if (!\is_array($operand) || !\in_array($cell, $operand, false)) {
+                            return false;
+                        }
                         break;
                     case 'BETWEEN':
-                        if (!\is_array($operand) || \count($operand) !== 2) return false;
-                        if (!($cell >= $operand[0] && $cell <= $operand[1])) return false;
+                        if (!\is_array($operand) || \count($operand) !== 2) {
+                            return false;
+                        }
+                        if (!($cell >= $operand[0] && $cell <= $operand[1])) {
+                            return false;
+                        }
                         break;
                     default: return false;
                 }
                 continue;
             }
-            if ($cell !== $value) return false;
+            if ($cell !== $value) {
+                return false;
+            }
         }
         return true;
     }

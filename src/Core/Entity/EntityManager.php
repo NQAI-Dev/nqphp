@@ -12,24 +12,11 @@ use Nqphp\Core\Entity\Driver\InMemoryDriver;
 use ReflectionClass;
 use ReflectionProperty;
 
-/**
- * Custom ORM-style entity manager.
- *
- * Phase 2 #8 (custom ORM, not Doctrine).
- *
- * Public API mirrors Symfony's `EntityRepository` for familiarity:
- *   - findAll(EntityClass)
- *   - findBy(EntityClass, array $criteria, ?array $orderBy, ?int $limit, ?int $offset)
- *   - findOneBy(EntityClass, array $criteria)
- *   - count(EntityClass, array $criteria)
- *   - persist(entity) + flush() — Unit-of-Work pattern
- *
- * Storage is in-memory (rows keyed by entity-name + id). The next
- * slice (Phase 2 #9) adds a SQL driver that implements the same
- * interface over PDO.
- */
 final class EntityManager
 {
+    /** @var array<string, true> */
+    private array $schemasEnsured = [];
+
     public function __construct(
         private readonly EntityDiscoverer $discoverer,
         private readonly DriverInterface $driver = new InMemoryDriver(),
@@ -37,11 +24,7 @@ final class EntityManager
     }
 
     /**
-     * Persist a new or modified entity (queued for the next flush()).
-     *
-     * Phase 2 #8: actually persists immediately (the in-memory
-     * driver has no flush barrier). The next slice will introduce a
-     * real flush that batches SQL writes.
+     * Persist a new or modified entity immediately through the configured driver.
      *
      * @template T of object
      * @param T $entity
@@ -49,80 +32,88 @@ final class EntityManager
      */
     public function persist(object $entity): object
     {
-        $entityName = $this->entityNameFor($entity);
         $reflection = new ReflectionClass($entity);
-        $idProp = $this->idPropertyFor($reflection);
-        $idProp->setAccessible(true);
-        if ($idProp->getValue($entity) === null) {
-            $idProp->setValue($entity, $this->nextIds[$entityName] ??= 1);
+        $entityName = $this->entityNameFor($entity);
+        $mapping = $this->mappingFor($reflection);
+        $this->ensureSchema($entityName, $mapping);
+
+        $data = [];
+        foreach ($mapping as $propertyName => $metadata) {
+            $property = $reflection->getProperty($propertyName);
+            $property->setAccessible(true);
+            if (!$property->isInitialized($entity)) {
+                continue;
+            }
+            $value = $property->getValue($entity);
+            if ($metadata['id'] && $value === null) {
+                continue;
+            }
+            $data[$metadata['name']] = $this->toStorageValue($value, $metadata['type']);
         }
-        $this->rows[$entityName][(int) $idProp->getValue($entity)] = $entity;
+
+        $id = $this->driver->persist($entityName, $data);
+        $idProperty = $this->idPropertyFor($reflection);
+        $idProperty->setAccessible(true);
+        $idProperty->setValue($entity, $id);
+
         return $entity;
     }
 
-    /** No-op for now — in-memory driver persists immediately. */
+    /** Drivers currently persist immediately; retained as a Unit-of-Work-compatible API. */
     public function flush(): void
     {
     }
 
-    /**
-     * Delete an entity by its primary key.
-     *
-     * Returns true if the entity was found and deleted; false if no
-     * row with that id existed (idempotent — second call on the same
-     * entity returns false without raising).
-     *
-     * Phase 2 #11 — completes the persistence-side surface alongside
-     * persist() + flush(). Cascade semantics are NOT included: deleting
-     * a parent does not delete children. Callers needing cascade must
-     * remove related entities explicitly before removing the parent.
-     *
-     * @param object $entity an entity with a non-null #[Id] property
-     * @return bool true if a row was deleted, false otherwise
-     */
     public function remove(object $entity): bool
     {
         $entityName = $this->entityNameFor($entity);
         $reflection = new ReflectionClass($entity);
-        $idProp = $this->idPropertyFor($reflection);
-        $idProp->setAccessible(true);
-        $id = $idProp->getValue($entity);
+        $idProperty = $this->idPropertyFor($reflection);
+        $idProperty->setAccessible(true);
+        $id = $idProperty->getValue($entity);
         if ($id === null) {
             throw new \RuntimeException(sprintf(
                 'Cannot remove %s: its #[Id] is null (entity was never persisted).',
                 $entityName
             ));
         }
+
         return $this->driver->delete($entityName, (int) $id);
     }
 
     /** @return list<object> */
     public function findAll(string $entityClass): array
     {
-        $name = $this->nameFor($entityClass);
-        return array_values($this->rows[$name] ?? []);
+        return $this->findBy($entityClass, []);
     }
 
-    /**
-     * @return list<object>
-     */
-    public function findBy(string $entityClass, array $criteria, ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array
-    {
-        $rows = $this->findAll($entityClass);
-        $rows = $this->applyCriteria($rows, $criteria);
-        if ($orderBy !== null) {
-            $rows = $this->applyOrderBy($rows, $entityClass, $orderBy);
-        }
-        if ($offset !== null && $offset > 0) {
-            $rows = \array_slice($rows, $offset);
-        }
-        if ($limit !== null && $limit > 0) {
-            $rows = \array_slice($rows, 0, $limit);
-        }
-        return $rows;
+    /** @return list<object> */
+    public function findBy(
+        string $entityClass,
+        array $criteria,
+        ?array $orderBy = null,
+        ?int $limit = null,
+        ?int $offset = null,
+    ): array {
+        $reflection = new ReflectionClass($entityClass);
+        $entityName = $this->nameFor($entityClass);
+        $mapping = $this->mappingFor($reflection);
+        $this->ensureSchema($entityName, $mapping);
+
+        $rows = $this->driver->findBy(
+            $entityName,
+            $this->mapCriteria($criteria, $mapping),
+            $this->mapOrderBy($orderBy ?? [], $mapping),
+            $limit,
+            $offset,
+        );
+
+        return array_map(
+            fn (array $row): object => $this->hydrate($reflection, $mapping, $row),
+            $rows,
+        );
     }
 
-    /** @return object|null */
     public function findOneBy(string $entityClass, array $criteria): ?object
     {
         $matches = $this->findBy($entityClass, $criteria, null, 1);
@@ -131,167 +122,207 @@ final class EntityManager
 
     public function count(string $entityClass, array $criteria = []): int
     {
-        if (\count($criteria) === 0) {
-            return \count($this->rows[$this->nameFor($entityClass)] ?? []);
-        }
-        return \count($this->applyCriteria($this->findAll($entityClass), $criteria));
+        $reflection = new ReflectionClass($entityClass);
+        $mapping = $this->mappingFor($reflection);
+        $entityName = $this->nameFor($entityClass);
+        $this->ensureSchema($entityName, $mapping);
+
+        return $this->driver->count($entityName, $this->mapCriteria($criteria, $mapping));
     }
 
     /**
-     * @param list<object> $rows
-     * @param array<string, mixed> $criteria map of property-name → expected-value
-     * @return list<object>
+     * @param array<string, array{name: string, type: string, nullable: bool, length: int|null, unique: bool, default: mixed, id: bool}> $mapping
      */
-    private function applyCriteria(array $rows, array $criteria): array
+    private function ensureSchema(string $entityName, array $mapping): void
     {
-        if (\count($criteria) === 0) {
-            return $rows;
+        if (isset($this->schemasEnsured[$entityName])) {
+            return;
         }
-        $filtered = [];
-        foreach ($rows as $row) {
-            foreach ($criteria as $property => $value) {
-                $prop = $this->propertyFor(new ReflectionClass($row), $property);
-                if ($prop === null) {
-                    continue 2;  // unknown property in criteria → exclude
-                }
-                $prop->setAccessible(true);
-                if ($prop->getValue($row) !== $value) {
-                    continue 2;
-                }
+
+        $columns = [];
+        foreach ($mapping as $metadata) {
+            $columns[$metadata['name']] = $metadata;
+        }
+        $this->driver->ensureSchema($entityName, $columns);
+        $this->schemasEnsured[$entityName] = true;
+    }
+
+    /**
+     * @return array<string, array{name: string, type: string, nullable: bool, length: int|null, unique: bool, default: mixed, id: bool}>
+     */
+    private function mappingFor(ReflectionClass $class): array
+    {
+        $this->idPropertyFor($class);
+        $mapping = [];
+        foreach ($class->getProperties() as $property) {
+            $id = count($property->getAttributes(Id::class)) > 0;
+            $columnAttributes = $property->getAttributes(Column::class);
+            if (!$id && count($columnAttributes) === 0) {
+                continue;
             }
-            $filtered[] = $row;
+
+            /** @var Column|null $column */
+            $column = count($columnAttributes) > 0 ? $columnAttributes[0]->newInstance() : null;
+            $type = $column?->type ?? $this->inferType($property);
+            $mapping[$property->getName()] = [
+                'name' => $id ? 'id' : ($column?->name ?? $this->snakeCase($property->getName())),
+                'type' => $id ? 'integer' : $type,
+                'nullable' => $id || ($column?->nullable ?? false),
+                'length' => $column?->length,
+                'unique' => $column?->unique ?? false,
+                'default' => $column?->default,
+                'id' => $id,
+            ];
         }
-        return $filtered;
+
+        return $mapping;
     }
 
     /**
-     * @param list<object> $rows
-     * @param array<int, string> $orderBy (field => 'asc'|'desc')
-     * @return list<object>
+     * @param array<string, mixed> $criteria
+     * @param array<string, array{name: string, type: string, nullable: bool, length: int|null, unique: bool, default: mixed, id: bool}> $mapping
+     * @return array<string, mixed>
      */
-    private function applyOrderBy(array $rows, string $entityClass, array $orderBy): array
+    private function mapCriteria(array $criteria, array $mapping): array
     {
-        if (\count($orderBy) === 0) {
-            return $rows;
-        }
-        // Stable sort by the first orderBy field; subsequent fields
-        // break ties via a chained comparator. Phase 2 #9 will hand
-        // the work to the SQL driver when one is in use.
-        [$field, $direction] = [array_key_first($orderBy), $orderBy[array_key_first($orderBy)]];
-        $sign = \strtolower($direction ?? 'asc') === 'desc' ? -1 : 1;
-        usort($rows, function (object $a, object $b) use ($field, $sign): int {
-            $pa = new ReflectionClass($a);
-            $pb = new ReflectionClass($b);
-            $propA = $this->propertyFor($pa, $field);
-            $propB = $this->propertyFor($pb, $field);
-            if ($propA === null || $propB === null) {
-                return 0;
+        $mapped = [];
+        foreach ($criteria as $property => $value) {
+            if (!isset($mapping[$property])) {
+                throw new \InvalidArgumentException(sprintf('Unknown persisted property "%s".', $property));
             }
-            $propA->setAccessible(true);
-            $propB->setAccessible(true);
-            $va = $propA->getValue($a);
-            $vb = $propB->getValue($b);
-            return $va <=> $vb * $sign;
-        });
-        return $rows;
+            $mapped[$mapping[$property]['name']] = $value;
+        }
+        return $mapped;
     }
 
     /**
-     * @return ReflectionProperty|null
+     * @param array<string, string> $orderBy
+     * @param array<string, array{name: string, type: string, nullable: bool, length: int|null, unique: bool, default: mixed, id: bool}> $mapping
+     * @return array<string, string>
      */
-    private function propertyFor(ReflectionClass $class, string $name): ?ReflectionProperty
+    private function mapOrderBy(array $orderBy, array $mapping): array
     {
-        try {
-            return $class->getProperty($name);
-        } catch (\ReflectionException) {
+        $mapped = [];
+        foreach ($orderBy as $property => $direction) {
+            if (!isset($mapping[$property])) {
+                throw new \InvalidArgumentException(sprintf('Unknown persisted property "%s".', $property));
+            }
+            $mapped[$mapping[$property]['name']] = $direction;
+        }
+        return $mapped;
+    }
+
+    /**
+     * @param array<string, array{name: string, type: string, nullable: bool, length: int|null, unique: bool, default: mixed, id: bool}> $mapping
+     * @param array<string, mixed> $row
+     */
+    private function hydrate(ReflectionClass $class, array $mapping, array $row): object
+    {
+        $entity = $class->newInstanceWithoutConstructor();
+        foreach ($mapping as $propertyName => $metadata) {
+            if (!array_key_exists($metadata['name'], $row)) {
+                continue;
+            }
+            $property = $class->getProperty($propertyName);
+            $property->setAccessible(true);
+            $property->setValue($entity, $this->fromStorageValue($row[$metadata['name']], $metadata['type']));
+        }
+        return $entity;
+    }
+
+    private function toStorageValue(mixed $value, string $type): mixed
+    {
+        if ($value === null) {
             return null;
         }
+        return match ($type) {
+            'boolean' => $value ? 1 : 0,
+            'datetime' => $value instanceof \DateTimeInterface ? $value->format(\DateTimeInterface::ATOM) : $value,
+            'json' => json_encode($value, JSON_THROW_ON_ERROR),
+            default => $value,
+        };
     }
 
-    /**
-     * @return ReflectionProperty
-     */
+    private function fromStorageValue(mixed $value, string $type): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+        return match ($type) {
+            'integer' => (int) $value,
+            'float' => (float) $value,
+            'boolean' => (bool) $value,
+            'datetime' => new \DateTimeImmutable((string) $value),
+            'json' => json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR),
+            default => $value,
+        };
+    }
+
+    private function inferType(ReflectionProperty $property): string
+    {
+        $type = $property->getType();
+        $name = $type instanceof \ReflectionNamedType ? $type->getName() : 'string';
+        return match ($name) {
+            'int' => 'integer',
+            'float' => 'float',
+            'bool' => 'boolean',
+            'array' => 'json',
+            \DateTime::class, \DateTimeImmutable::class, \DateTimeInterface::class => 'datetime',
+            default => 'string',
+        };
+    }
+
+    private function snakeCase(string $name): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+    }
+
     private function idPropertyFor(ReflectionClass $class): ReflectionProperty
     {
-        $idProp = null;
-        foreach ($class->getProperties() as $prop) {
-            if (\count($prop->getAttributes(Id::class)) > 0) {
-                if ($idProp !== null) {
-                    throw new \RuntimeException(sprintf(
-                        'Entity %s has multiple #[Id] properties; exactly one is required.',
-                        $class->getName()
-                    ));
-                }
-                $idProp = $prop;
+        $idProperty = null;
+        foreach ($class->getProperties() as $property) {
+            if (count($property->getAttributes(Id::class)) === 0) {
+                continue;
             }
+            if ($idProperty !== null) {
+                throw new \RuntimeException(sprintf(
+                    'Entity %s has multiple #[Id] properties; exactly one is required.',
+                    $class->getName()
+                ));
+            }
+            $idProperty = $property;
         }
-        if ($idProp === null) {
+        if ($idProperty === null) {
             throw new \RuntimeException(sprintf(
                 'Entity %s has no #[Id] property; mark the primary key field with #[Id].',
                 $class->getName()
             ));
         }
-        return $idProp;
+        return $idProperty;
     }
 
-    /**
-     * @return list<string> list of #[Column]-tagged property names
-     */
-    private function columnPropertiesFor(ReflectionClass $class): array
-    {
-        $cols = [];
-        foreach ($class->getProperties() as $prop) {
-            if (\count($prop->getAttributes(Column::class)) > 0 || \count($prop->getAttributes(Id::class)) > 0) {
-                $cols[] = $prop->getName();
-            }
-        }
-        return $cols;
-    }
-
-    /**
-     * @return string
-     */
     private function entityNameFor(object $entity): string
     {
-        $reflection = new ReflectionClass($entity);
-        $attrs = $reflection->getAttributes(Entity::class);
-        if (\count($attrs) === 0) {
-            throw new \RuntimeException(sprintf(
-                '%s is not marked with #[Entity]',
-                $reflection->getName()
-            ));
-        }
-        /** @var Entity $entityAttr */
-        $entityAttr = $attrs[0]->newInstance();
-        // `$name` is the canonical handle (Entity::name) used for discover lookup.
-        // `$tableName` is the physical SQL table name — defaults to $name when
-        // the entity doesn't override `table` (Phase 2 #10+ extension).
-        $name = $entityAttr->name;
-        $tableName = $entityAttr->table ?? $entityAttr->name;
-        if (!$this->discoverer->discover()->has($name)) {
-            throw new \RuntimeException(sprintf(
-                'Entity "%s" not discovered — check the file path under src/Feature/*/Entity/',
-                $name
-            ));
-        }
-        return $tableName;
+        return $this->nameFor($entity::class);
     }
 
-    /**
-     * @return string entity name for a given class-string
-     */
     private function nameFor(string $entityClass): string
     {
         $reflection = new ReflectionClass($entityClass);
-        $attrs = $reflection->getAttributes(Entity::class);
-        if (\count($attrs) === 0) {
+        $attributes = $reflection->getAttributes(Entity::class);
+        if (count($attributes) === 0) {
+            throw new \RuntimeException(sprintf('%s is not marked with #[Entity]', $entityClass));
+        }
+
+        /** @var Entity $entity */
+        $entity = $attributes[0]->newInstance();
+        if (!$this->discoverer->discover()->has($entity->name)) {
             throw new \RuntimeException(sprintf(
-                '%s is not marked with #[Entity]',
-                $entityClass
+                'Entity "%s" not discovered — check the file path under src/Feature/*/Entity/',
+                $entity->name
             ));
         }
-        /** @var Entity $entityAttr */
-        $entityAttr = $attrs[0]->newInstance();
-        return $entityAttr->name;
+
+        return $entity->table ?? $entity->name;
     }
 }

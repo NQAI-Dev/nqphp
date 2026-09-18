@@ -111,9 +111,9 @@ final class SqliteDriver implements DriverInterface
             $default = $this->renderDefault($meta['default'] ?? null);
             $this->schemas[$entityName][$name] = $type . $nullable . $unique . $default;
         }
-        // Drop and re-create is the simplest schema-bootstrap for now.
-        // Real migrations come in a follow-up commit.
-        $this->pdo->exec("DROP TABLE IF EXISTS `$entityName`");
+        // Bootstrap a missing table without destroying existing data when
+        // another EntityManager instance reuses the same connection.
+        // Schema migrations remain a separate concern.
         $cols = ['id INTEGER PRIMARY KEY AUTOINCREMENT'];
         foreach ($this->schemas[$entityName] as $name => $def) {
             if ($name === 'id') {
@@ -123,7 +123,7 @@ final class SqliteDriver implements DriverInterface
             // form is valid SQLite column-constraint syntax.
             $cols[] = "`$name` $def";
         }
-        $this->pdo->exec("CREATE TABLE `$entityName` (" . implode(', ', $cols) . ')');
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS `$entityName` (" . implode(', ', $cols) . ')');
     }
 
     /**
@@ -149,8 +149,8 @@ final class SqliteDriver implements DriverInterface
     private function insertRow(string $entityName, array $data): void
     {
         $cols = array_keys($data);
-        $placeholders = array_map(fn($c) => ":$c", $cols);
-        $sql = "INSERT INTO `$entityName` (`" . implode('`, `', $cols) . "`) VALUES ("
+        $placeholders = array_map(fn ($c) => ":$c", $cols);
+        $sql = "INSERT INTO `$entityName` (`" . implode('`, `', $cols) . '`) VALUES ('
              . implode(', ', $placeholders) . ')';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
@@ -162,8 +162,8 @@ final class SqliteDriver implements DriverInterface
     private function updateRow(string $entityName, int $id, array $data): void
     {
         unset($data['id']);
-        $assignments = array_map(fn($c) => "`$c` = :$c", array_keys($data));
-        $sql = "UPDATE `$entityName` SET " . implode(', ', $assignments) . " WHERE id = :__id";
+        $assignments = array_map(fn ($c) => "`$c` = :$c", array_keys($data));
+        $sql = "UPDATE `$entityName` SET " . implode(', ', $assignments) . ' WHERE id = :__id';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data + ['__id' => $id]);
     }
@@ -205,25 +205,25 @@ final class SqliteDriver implements DriverInterface
                             $placeholders[] = ':' . $p;
                             $params[$p] = $item;
                         }
-                        $clauses[] = "\`$col\` IN (" . \implode(', ', $placeholders) . ')';
+                        $clauses[] = "`$col` IN (" . \implode(', ', $placeholders) . ')';
                         continue 2;
                     case 'BETWEEN':
                         if (!\is_array($operand) || \count($operand) !== 2) {
                             throw new \InvalidArgumentException('BETWEEN requires a 2-element array operand');
                         }
-                        $clauses[] = "\`$col\` BETWEEN :{$placeholder}_min AND :{$placeholder}_max";
+                        $clauses[] = "`$col` BETWEEN :{$placeholder}_min AND :{$placeholder}_max";
                         $params[$placeholder . '_min'] = $operand[0];
                         $params[$placeholder . '_max'] = $operand[1];
                         continue 2;
                     default:
                         // Comparison / LIKE operator
-                        $clauses[] = "\`$col\` $op :$placeholder";
+                        $clauses[] = "`$col` $op :$placeholder";
                         $params[$placeholder] = $operand;
                         continue 2;
                 }
             }
             // Scalar shape: exact match.
-            $clauses[] = "\`$col\` = :$placeholder";
+            $clauses[] = "`$col` = :$placeholder";
             $params[$placeholder] = $value;
         }
         return ['WHERE ' . \implode(' AND ', $clauses), $params];
@@ -252,7 +252,7 @@ final class SqliteDriver implements DriverInterface
         return " DEFAULT '" . $escaped . "'";
     }
 
-        /**
+    /**
      * @return string SQLite column type for a logical type
      */
     private function sqliteType(string $logical): string

@@ -8,6 +8,7 @@ use Nqphp\Core\Config\ConfigSchemaDiscoverer;
 use Nqphp\Core\Config\ConfigStore;
 use Nqphp\Core\Config\FeatureConfig;
 use Nqphp\Core\Container\FeatureContainer;
+use Nqphp\Core\Controller\AbstractController;
 use Nqphp\Core\Entity\Driver\InMemoryDriver;
 use Nqphp\Core\Entity\Driver\SqliteDriver;
 use Nqphp\Core\Entity\EntityDiscoverer;
@@ -15,11 +16,10 @@ use Nqphp\Core\Entity\EntityManager;
 use Nqphp\Core\Input\RequestData;
 use Nqphp\Core\Js\JsModuleServer;
 use Nqphp\Core\Middleware\MiddlewareDiscoverer;
-use Nqphp\Core\Routing\KernelUrlGenerator;
 use Nqphp\Core\Middleware\RouteHookDiscoverer;
+use Nqphp\Core\Routing\KernelUrlGenerator;
 use Nqphp\Core\Routing\Router;
 use Nqphp\Core\Security\CsrfTokenManager;
-use Nqphp\Core\Controller\AbstractController;
 use Nqphp\Core\Service\ServiceDiscoverer;
 use PDO;
 use ReflectionClass;
@@ -63,6 +63,9 @@ final class Kernel implements HttpKernelInterface
 
     /** @var \Nqphp\Core\Entity\EntityDiscoverer */
     private readonly EntityDiscoverer $entityDiscoverer;
+
+    /** @var \\Nqphp\\Core\\Entity\\Driver\\DriverInterface */
+    private readonly \Nqphp\Core\Entity\Driver\DriverInterface $driver;
 
     /** @var \Nqphp\Core\Entity\EntityManager */
     private readonly EntityManager $entityManager;
