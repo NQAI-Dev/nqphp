@@ -93,7 +93,7 @@ final class JsModuleServerTest extends TestCase
         sort($names);
         self::assertSame([
             '/_nqphp/js/Hello/client.js',
-            '/_nqphp/js/Secret/Resources/private.js',
+            '/_nqphp/js/Secret/private.js',
             '/_nqphp/js/nqphp-runtime.js',
         ], $names);
     }

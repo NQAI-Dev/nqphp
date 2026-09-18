@@ -45,7 +45,7 @@ final class ConfigStore
         /** @var \Nqphp\Core\Attribute\ConfigKey $schemaAttr */
         $schemaAttr = $attrs[0]->newInstance();
         $feature = $schemaAttr->feature;
-        $raw = $this->raw->load()->all($feature);
+        $raw = $this->raw->all($feature);
 
         $instance = $reflection->newInstanceWithoutConstructor();
         foreach ($reflection->getProperties() as $prop) {

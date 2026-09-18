@@ -47,7 +47,7 @@ final class Kernel implements HttpKernelInterface
     private $projectDir;
 
     /** @var \Nqphp\Core\Routing\Router */
-    private $router;
+    public $router;
 
     /** @var \Nqphp\Core\Middleware\MiddlewareDiscoverer */
     private readonly MiddlewareDiscoverer $middlewareDiscoverer;
@@ -56,7 +56,7 @@ final class Kernel implements HttpKernelInterface
     private readonly FeatureConfig $featureConfig;
 
     /** @var \Nqphp\Core\Service\ServiceDiscoverer */
-    private readonly ServiceDiscoverer $serviceDiscoverer;
+    public ServiceDiscoverer $serviceDiscoverer;
 
     /** @var array<string, object> Singleton cache: name → instantiated service */
     private array $serviceInstances = [];

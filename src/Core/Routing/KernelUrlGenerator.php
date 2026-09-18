@@ -64,7 +64,9 @@ final class KernelUrlGenerator
         // we use that convention for query parameters ("?foo=bar").
         // Any param key not matching the route's placeholders becomes
         // a query string automatically.
-        $context = new RequestContext('', $override['scheme'] ?? '', $override['host'] ?? '');
+        $context = new RequestContext();
+        $context->setScheme($override['scheme'] ?? 'http');
+        $context->setHost($override['host'] ?? 'localhost');
         if (isset($override['https'])) {
             $context->setHttpsPort($override['https'] ? 443 : 80);
             $context->setHttpPort($override['https'] ? 80 : 443);

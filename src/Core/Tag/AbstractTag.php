@@ -100,6 +100,11 @@ abstract class AbstractTag
      * @return static       The same tag instance, for fluent chaining. */
     public function setAttribute(string $name, string $value): static
     {
+        // Direct class= attribute replaces any accumulated setClass()
+        // list — the caller wins ("last in wins" per test contract).
+        if (strtolower($name) === 'class') {
+            $this->classes = [];
+        }
         $this->attrs[$name] = $value;
         return $this;
     }
