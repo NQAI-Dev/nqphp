@@ -142,6 +142,19 @@ final class QueryBuilderTest extends TestCase
         $this->assertSame(range(10, 100, 10), $views);
     }
 
+    public function testOrderByUsesEveryClauseInPriorityOrder(): void
+    {
+        $rows = QueryBuilder::for('article', $this->driver)
+            ->orderBy('status')
+            ->orderBy('views', 'desc')
+            ->fetch();
+
+        $this->assertSame(
+            [90, 70, 50, 30, 10, 100, 80, 60, 40, 20],
+            array_column($rows, 'views'),
+        );
+    }
+
     // -------------------------------------------------------------------------
     // limit() and offset()
     // -------------------------------------------------------------------------

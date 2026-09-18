@@ -47,12 +47,15 @@ final class InMemoryDriver implements DriverInterface
         $rows = array_values($this->rows[$entityName] ?? []);
         $rows = array_filter($rows, fn($row) => $this->matches($row, $criteria));
         if (\count($orderBy) > 0) {
-            [$field, $direction] = [array_key_first($orderBy), $orderBy[array_key_first($orderBy)]];
-            $sign = \strtolower($direction ?? 'asc') === 'desc' ? -1 : 1;
-            usort($rows, function (array $a, array $b) use ($field, $sign): int {
-                $va = $a[$field] ?? null;
-                $vb = $b[$field] ?? null;
-                return ($va <=> $vb) * $sign;
+            usort($rows, static function (array $a, array $b) use ($orderBy): int {
+                foreach ($orderBy as $field => $direction) {
+                    $comparison = ($a[$field] ?? null) <=> ($b[$field] ?? null);
+                    if ($comparison !== 0) {
+                        return \strtolower($direction) === 'desc' ? -$comparison : $comparison;
+                    }
+                }
+
+                return 0;
             });
         }
         if ($offset !== null && $offset > 0) {
