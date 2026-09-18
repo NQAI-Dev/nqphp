@@ -49,7 +49,9 @@ final class User
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\MyApp\Entity\User::class)) {
+            require_once $srcPath;
+        }
         $discoverer = new EntityDiscoverer([$tmp]);
         $em = new EntityManager($discoverer);
 
@@ -108,7 +110,9 @@ final class Post
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\Test\Entity\Post::class)) {
+            require_once $srcPath;
+        }
         $discoverer = new EntityDiscoverer([$tmp]);
         $em = new EntityManager($discoverer);
 
@@ -150,7 +154,9 @@ final class Bad
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\Bad\Entity\Bad::class)) {
+            require_once $srcPath;
+        }
         $discoverer = new EntityDiscoverer([$tmp]);
         $em = new EntityManager($discoverer);
 

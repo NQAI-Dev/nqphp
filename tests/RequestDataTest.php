@@ -44,7 +44,9 @@ final class CreatePostInput
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\Blog\Input\CreatePostInput::class)) {
+            require_once $srcPath;
+        }
         $req = Request::create('/api/posts', 'POST', [], [], [], [], '{"title":"Hello","body":"World","author_id":42}');
         $req->headers->set('Content-Type', 'application/json');
         $extractor = new RequestData($req);
@@ -81,7 +83,9 @@ final class PageInput
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\Page\Input\PageInput::class)) {
+            require_once $srcPath;
+        }
         $req = Request::create('/list?page_number=3&sort_by=name', 'GET');
         $extractor = new RequestData($req);
         /** @var object $input */
@@ -115,7 +119,9 @@ final class PageInput
 }
 PHP);
 
-        require_once $srcPath;
+        if (!\class_exists(\App\Page\Input\PageInput::class)) {
+            require_once $srcPath;
+        }
         $req = Request::create('/list', 'GET');
         $extractor = new RequestData($req);
         /** @var object $input */

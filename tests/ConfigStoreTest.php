@@ -84,7 +84,7 @@ PHP);
 
         $tmp = sys_get_temp_dir() . '/nqphp-cfg-defaults-' . uniqid();
         mkdir($tmp . '/Hello/Config', 0755, true);
-        $srcPath = $tmp . '/Hello/Config/HelloConfig.php';
+        $srcPath = $tmp . '/Hello/Config/HelloDefaultsConfig.php';
         file_put_contents($srcPath, <<<'PHP'
 <?php
 declare(strict_types=1);
@@ -93,7 +93,7 @@ namespace App\Hello\Config;
 use Nqphp\Core\Attribute\ConfigKey;
 
 #[ConfigKey(feature: 'Hello')]
-final class HelloConfig
+final class HelloDefaultsConfig
 {
     public int $cacheTtl = 60;
     public string $name = 'default-name';
@@ -102,7 +102,7 @@ PHP);
 
         require_once $srcPath;
         $store = new ConfigStore($raw);
-        $cfg = $store->get(\App\Hello\Config\HelloConfig::class);
+        $cfg = $store->get(\App\Hello\Config\HelloDefaultsConfig::class);
 
         self::assertSame(60, $cfg->cacheTtl);
         self::assertSame('default-name', $cfg->name);

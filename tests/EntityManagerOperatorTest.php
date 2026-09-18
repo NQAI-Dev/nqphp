@@ -51,7 +51,11 @@ PHP;
         mkdir($tmp . '/Feature/Ops/Entity', 0755, true);
         $src = $tmp . '/Feature/Ops/Entity/Item.php';
         file_put_contents($src, self::ENTITY_SRC);
-        require_once $src;
+        // The class lives in a fresh temp path per test, so require_once
+        // alone cannot dedupe it across runs — guard on class_exists.
+        if (!\class_exists(\App\Ops\Entity\Item::class)) {
+            require_once $src;
+        }
         return $tmp;
     }
 

@@ -48,7 +48,9 @@ PHP;
         mkdir($tmp . '/Feature/Del/Entity', 0755, true);
         $src = $tmp . '/Feature/Del/Entity/Note.php';
         file_put_contents($src, self::ENTITY_SRC);
-        require_once $src;
+        if (!\class_exists(\App\Del\Entity\Note::class)) {
+            require_once $src;
+        }
         return $tmp;
     }
 
