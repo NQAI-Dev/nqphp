@@ -3,6 +3,12 @@
 declare(strict_types=1);
 
 namespace Nqphp\Core\Tag;
+use Nqphp\Core\Tag\H1;
+use Nqphp\Core\Tag\H2;
+use Nqphp\Core\Tag\H3;
+use Nqphp\Core\Tag\P;
+use Nqphp\Core\Tag\Strong;
+use Nqphp\Core\Tag\Em;
 
 /**
  * Static factory for typed HTML tag builders.
@@ -87,12 +93,42 @@ final class Tag
     /** @return Select a fresh, empty <select> builder. */
     public static function select(): Select
     {
-        return new Select();
     }
 
     /** @return Option a fresh, empty <option> builder. */
     public static function option(): Option
     {
         return new Option();
+    }
+}
+
+    public static function h1(): H1
+    {
+        return new H1();
+    }
+
+    public static function h2(): H2
+    {
+        return new H2();
+    }
+
+    public static function h3(): H3
+    {
+        return new H3();
+    }
+
+    public static function p(): P
+    {
+        return new P();
+    }
+
+    public static function strong(): Strong
+    {
+        return new Strong();
+    }
+
+    public static function em(): Em
+    {
+        return new Em();
     }
 }
