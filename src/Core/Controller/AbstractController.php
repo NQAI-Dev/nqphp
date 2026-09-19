@@ -34,6 +34,7 @@ abstract class AbstractController
      * Kernel can setValue() on it for any AbstractController subclass.
      */
     protected ?\Nqphp\Core\Kernel\Kernel $kernel = null;
+    protected ?\Nqphp\Core\View\RouteAssetManager $assetManager = null;
 
     public function __construct(?\Nqphp\Core\Kernel\Kernel $kernel = null)
     {
@@ -58,15 +59,40 @@ abstract class AbstractController
 
     /**
      * Return an HTML response from a native PHP view template.
-     * Assumes views are located in src/Feature/{Feature}/View or a global directory.
-     * This requires passing the explicit absolute path or using a configured ViewRenderer.
-     * For now, it delegates to a local renderer.
+     * Automatically registers and attaches scoped CSS and route JS if present.
      */
     protected function render(string $viewPath, array $data = [], int $status = 200, array $headers = []): Response
     {
         $renderer = new \Nqphp\Core\View\ViewRenderer(dirname($viewPath));
-        $body = $renderer->render(basename($viewPath), $data);
-        return new Response($body, $status, $headers);
+        $baseName = basename($viewPath);
+        $body = $renderer->render($baseName, $data);
+        $response = new Response($body, $status, $headers);
+
+        if ($this->kernel !== null) {
+            $viewDir = dirname($viewPath);
+            $pureName = pathinfo($baseName, PATHINFO_FILENAME);
+            $scopedCssFile = $viewDir . '/' . $pureName . '.scoped.css';
+            $routeJsFile = $viewDir . '/' . $pureName . '.route.js';
+
+            $assetManager = new \Nqphp\Core\View\RouteAssetManager($this->kernel->getProjectDir());
+            $cssUrl = null;
+            $jsUrl = null;
+
+            if (file_exists($scopedCssFile)) {
+                $scopedInfo = $assetManager->registerScopedCss($scopedCssFile, $pureName);
+                $cssUrl = $scopedInfo['assetUrl'];
+            }
+
+            if (file_exists($routeJsFile)) {
+                // Feature route JS
+                $relJs = substr($routeJsFile, strlen($this->kernel->getProjectDir()));
+                $jsUrl = '/_nqphp/asset' . $relJs;
+            }
+
+            $assetManager->attachToResponse($response, $cssUrl, $jsUrl);
+        }
+
+        return $response;
     }
 
     protected function redirect(string $url, int $status = 302): RedirectResponse

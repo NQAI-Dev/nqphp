@@ -23,6 +23,39 @@
   const CSRF_COOKIE = 'nqphp_csrf';
   const CSRF_HEADER = 'X-CSRF-Token';
   const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+  const loadedStylesheets = new Set();
+  const loadedScripts = new Set();
+
+  function loadStylesheet(url) {
+    if (!url || loadedStylesheets.has(url)) return Promise.resolve();
+    return new Promise((resolve) => {
+      if (document.querySelector(`link[rel="stylesheet"][href="${url}"]`)) {
+        loadedStylesheets.add(url);
+        return resolve();
+      }
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      link.onload = () => {
+        loadedStylesheets.add(url);
+        resolve();
+      };
+      link.onerror = () => resolve();
+      document.head.appendChild(link);
+    });
+  }
+
+  function loadRouteScript(url, targetElement) {
+    if (!url || typeof importShim === 'undefined' && typeof window === 'undefined') return Promise.resolve();
+    return import(url).then(mod => {
+      if (mod && typeof mod.mount === 'function' && targetElement) {
+        mod.mount(targetElement);
+      }
+    }).catch(err => {
+      console.warn('[nq.js] Failed to load route module:', url, err);
+    });
+  }
+
 
   function getCsrfToken() {
     if (typeof document === 'undefined') return null;
@@ -174,7 +207,18 @@
         }));
       }
 
+            const nqCss = response.headers.get('X-NQ-CSS');
+      const nqJs = response.headers.get('X-NQ-JS');
+
+      if (nqCss) {
+        await loadStylesheet(nqCss);
+      }
+
       applySwap(target, responseText, swapStrategy);
+
+      if (nqJs) {
+        loadRouteScript(nqJs, target);
+      }
 
       if (element.getAttribute('data-nq-push-url') === 'true') {
         window.history.pushState({}, '', requestUrl);
