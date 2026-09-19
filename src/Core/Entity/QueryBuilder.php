@@ -234,4 +234,17 @@ final class QueryBuilder
     {
         return $this->offset;
     }
+
+    /**
+     * Paginate results into a Paginator instance with total counts and pagination metadata.
+     *
+     * @param int $page 1-based page number
+     * @param int $perPage number of items per page
+     * @return Paginator<mixed>
+     */
+    public function toPaginator(int $page = 1, int $perPage = 15): Paginator
+    {
+        return Paginator::paginate($this, $page, $perPage);
+    }
 }
+
