@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Controller;
 
+use Nqphp\Core\Validation\ValidationException;
+use Nqphp\Core\Validation\Validator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -75,5 +77,32 @@ abstract class AbstractController
     protected function json(mixed $data, int $status = 200, array $headers = []): JsonResponse
     {
         return new JsonResponse($data, $status, $headers);
+    }
+
+    /**
+     * Hydrate a `#[Input]` DTO from the current request and validate
+     * it against its `#[Assert]` attributes. On failure a 422
+     * ValidationException propagates to the kernel error boundary,
+     * which renders a problem+json response with the per-field
+     * `errors` map. On success the hydrated DTO instance is returned.
+     *
+     * @template T of object
+     * @param class-string<T> $dtoClass
+     * @return T
+     */
+    protected function validate(string $dtoClass): object
+    {
+        if ($this->kernel === null) {
+            throw new \RuntimeException(
+                'Cannot validate input outside a kernel dispatch: kernel reference is not set.'
+            );
+        }
+
+        $dto = $this->kernel->input($dtoClass);
+        $errors = (new Validator())->validate($dto);
+        if ($errors !== []) {
+            throw new ValidationException($errors);
+        }
+        return $dto;
     }
 }

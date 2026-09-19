@@ -27,8 +27,19 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class RequestData
 {
-    public function __construct(private readonly Request $request)
+    public function __construct(private Request $request)
     {
+    }
+
+    /**
+     * Re-bind to the request currently being dispatched. The Kernel
+     * calls this at the top of every handle() so DTO hydration via
+     * kernel->input() always reads the live request, not the empty
+     * placeholder the kernel was constructed with.
+     */
+    public function bind(Request $request): void
+    {
+        $this->request = $request;
     }
 
     /**

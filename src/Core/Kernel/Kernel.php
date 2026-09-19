@@ -407,6 +407,12 @@ final class Kernel implements HttpKernelInterface
      */
     private function handleRaw(Request $request, int $type): Response
     {
+        // Re-bind the shared RequestData extractor to the request
+        // being handled: kernel->input() / AbstractController::validate()
+        // must hydrate DTOs from the live request (JSON body, form,
+        // query), not the empty placeholder from the constructor.
+        $this->requestData->bind($request);
+
         // Framework-internal namespace: JS modules + future framework
         // endpoints. Resolved before user routes so feature code never
         // shadows the runtime.

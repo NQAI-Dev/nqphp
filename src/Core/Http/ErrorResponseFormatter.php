@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nqphp\Core\Http;
 
 use Nqphp\Core\Exception\HttpException;
+use Nqphp\Core\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -75,6 +76,10 @@ final readonly class ErrorResponseFormatter
             'detail' => $detail,
             'instance' => $request->getRequestUri(),
         ];
+
+        if ($exception instanceof ValidationException && $exception->getErrors() !== []) {
+            $problem['errors'] = $exception->getErrors();
+        }
 
         if ($this->debug && !$exception instanceof HttpException) {
             $problem['exception'] = $exception::class;
