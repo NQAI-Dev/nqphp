@@ -41,6 +41,15 @@ final class JsRuntime
     }
 
     /**
+     * URL to nq.js — declarative HTMX-like server-driven UI runtime.
+     * <script src="/_nqphp/js/nq.js" defer></script>
+     */
+    public function nqUrl(): string
+    {
+        return JsModuleServer::urlPrefix() . 'nq.js';
+    }
+
+    /**
      * Cookie name that holds the CSRF token. Mirrors the constant on
      * CsrfTokenManager so JS can read it without a server roundtrip.
      */
