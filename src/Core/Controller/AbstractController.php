@@ -190,4 +190,20 @@ abstract class AbstractController
             throw new \Nqphp\Core\Exception\HttpException(403, $message);
         }
     }
+
+    /**
+     * Return a file download response (Content-Disposition: attachment).
+     */
+    protected function fileDownload(string $filePath, ?string $fileName = null, array $headers = []): \Nqphp\Core\Http\FileResponse
+    {
+        return \Nqphp\Core\Http\FileResponse::download($filePath, $fileName, $headers);
+    }
+
+    /**
+     * Return an inline file response (Content-Disposition: inline).
+     */
+    protected function fileInline(string $filePath, ?string $fileName = null, array $headers = []): \Nqphp\Core\Http\FileResponse
+    {
+        return \Nqphp\Core\Http\FileResponse::inline($filePath, $fileName, $headers);
+    }
 }

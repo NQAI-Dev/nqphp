@@ -1,7 +1,8 @@
 /vendor/
 /composer.lock
 /.phpunit.result.cache
-/.phpunit.cache/
+/.phpunit.cache
+/.serena/
 /.idea/
 /.vscode/
 *.swp
