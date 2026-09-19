@@ -95,9 +95,9 @@ final class RequestData
         $form = $this->request->request->all();
         $query = $this->request->query->all();
 
-        // Priority: $json > $form > $query (later doesn't override earlier)
+        // Priority: $json > $form > $query
         $merged = [];
-        foreach ($query as $k => $v) {
+        foreach ($json as $k => $v) {
             $merged[$k] = $v;
         }
         foreach ($form as $k => $v) {
@@ -105,7 +105,7 @@ final class RequestData
                 $merged[$k] = $v;
             }
         }
-        foreach ($json as $k => $v) {
+        foreach ($query as $k => $v) {
             if (!\array_key_exists($k, $merged) || $merged[$k] === null) {
                 $merged[$k] = $v;
             }
