@@ -83,7 +83,7 @@ final class ControllerValidationTest extends TestCase
         $payload = json_decode((string) $response->getContent(), true);
         self::assertSame(422, $payload['status']);
         self::assertSame('Validation failed', $payload['detail']);
-        self::assertContains('Invalid email format', $payload['errors']['email']);
+        self::assertContains('The email field must be a valid email address.', $payload['errors']['email']);
         self::assertArrayHasKey('name', $payload['errors']);
     }
 

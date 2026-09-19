@@ -47,13 +47,13 @@ final class ValidationTest extends TestCase
         $errors = $validator->validate($dto);
 
         $this->assertArrayHasKey('email', $errors);
-        $this->assertEquals('Invalid email format', $errors['email'][0]);
+        $this->assertEquals('The email field must be a valid email address.', $errors['email'][0]);
 
         $this->assertArrayHasKey('name', $errors);
-        $this->assertEquals('Minimum value/length is 3', $errors['name'][0]);
+        $this->assertEquals('The name field must be at least 3 characters.', $errors['name'][0]);
 
         $this->assertArrayHasKey('age', $errors);
-        $this->assertEquals('Maximum value/length is 10', $errors['age'][0]);
+        $this->assertEquals('The age field may not be greater than 10.', $errors['age'][0]);
     }
 
     public function testRequiredObject(): void
