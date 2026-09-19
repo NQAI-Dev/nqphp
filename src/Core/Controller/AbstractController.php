@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Controller;
 
+use Nqphp\Core\Http\RedirectResponse;
 use Nqphp\Core\Validation\ValidationException;
 use Nqphp\Core\Validation\Validator;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -97,7 +97,15 @@ abstract class AbstractController
 
     protected function redirect(string $url, int $status = 302): RedirectResponse
     {
-        return new RedirectResponse($url, $status);
+        $response = new RedirectResponse($url, $status);
+        if ($this->kernel !== null) {
+            try {
+                $response->withSession($this->kernel->session());
+            } catch (\Throwable) {
+                // Session might not be configured or available
+            }
+        }
+        return $response;
     }
 
     protected function json(mixed $data, int $status = 200, array $headers = []): JsonResponse
