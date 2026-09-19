@@ -14,10 +14,10 @@ namespace Nqphp\Core\Tag;
 final class Img extends AbstractTag
 {
     /** Tag name is hard-coded to "img" — subclass never varies. */
-    public function __construct()
+        public function __construct(mixed ...$args)
     {
         $this->tag = 'img';
-        $this->selfClosing = true;
+        parent::__construct(...$args);
     }
 
     /** Convenience: src + alt in one call.

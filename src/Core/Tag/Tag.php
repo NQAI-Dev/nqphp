@@ -201,4 +201,13 @@ final class Tag
         return new Aside(...$args);
     }
 
+
+    /**
+     * Render raw unescaped HTML.
+     */
+    public static function raw(string $html): string
+    {
+        return $html;
+    }
+
 }
