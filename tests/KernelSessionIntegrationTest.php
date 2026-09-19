@@ -25,6 +25,18 @@ final class SessionControllerFixture extends AbstractController
         $this->session()->set('fixture_key', 'fixture_val');
         return new Response('val:' . $this->session()->get('fixture_key'));
     }
+
+    public function flashProducer(): Response
+    {
+        $this->addFlash('success', 'Operation completed');
+        return new Response('flash_set');
+    }
+
+    public function flashConsumer(): Response
+    {
+        $messages = $this->getFlash('success');
+        return new Response('flashes:' . implode(',', $messages));
+    }
 }
 
 final class KernelSessionIntegrationTest extends TestCase
@@ -83,6 +95,34 @@ final class KernelSessionIntegrationTest extends TestCase
         $response = $kernel->handle(Request::create('/_test/session/helper'));
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('val:fixture_val', $response->getContent());
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testAbstractControllerFlashHelpers(): void
+    {
+        $kernel = new Kernel(__DIR__ . '/..');
+        $this->addRoute(
+            $kernel,
+            '/_test/session/flash-produce',
+            SessionControllerFixture::class . '::flashProducer'
+        );
+        $this->addRoute(
+            $kernel,
+            '/_test/session/flash-consume',
+            SessionControllerFixture::class . '::flashConsumer'
+        );
+
+        $res1 = $kernel->handle(Request::create('/_test/session/flash-produce'));
+        $this->assertSame('flash_set', $res1->getContent());
+
+        $res2 = $kernel->handle(Request::create('/_test/session/flash-consume'));
+        $this->assertSame('flashes:Operation completed', $res2->getContent());
+
+        // Consuming again should yield empty flashes
+        $res3 = $kernel->handle(Request::create('/_test/session/flash-consume'));
+        $this->assertSame('flashes:', $res3->getContent());
     }
 
     private function addRoute(Kernel $kernel, string $path, string $controller): void

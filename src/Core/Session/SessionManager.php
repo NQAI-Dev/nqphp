@@ -56,15 +56,46 @@ class SessionManager implements SessionInterface
         $this->start();
         $_SESSION = [];
     }
-    
+
     public function destroy(): void
     {
         if (!$this->isStarted()) {
             return;
         }
-        
+
         session_destroy();
         $this->started = false;
         $_SESSION = [];
+    }
+
+    public function addFlash(string $key, mixed $message): void
+    {
+        $this->start();
+        if (!isset($_SESSION['_flash'][$key]) || !is_array($_SESSION['_flash'][$key])) {
+            $_SESSION['_flash'][$key] = [];
+        }
+        $_SESSION['_flash'][$key][] = $message;
+    }
+
+    public function getFlash(string $key, array $default = []): array
+    {
+        $this->start();
+        if (!isset($_SESSION['_flash'][$key]) || !is_array($_SESSION['_flash'][$key])) {
+            return $default;
+        }
+
+        $messages = $_SESSION['_flash'][$key];
+        unset($_SESSION['_flash'][$key]);
+        if (empty($_SESSION['_flash'])) {
+            unset($_SESSION['_flash']);
+        }
+
+        return $messages;
+    }
+
+    public function hasFlash(string $key): bool
+    {
+        $this->start();
+        return !empty($_SESSION['_flash'][$key]);
     }
 }

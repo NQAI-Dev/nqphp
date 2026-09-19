@@ -93,6 +93,24 @@ abstract class AbstractController
     }
 
     /**
+     * Add a flash message to the session.
+     */
+    protected function addFlash(string $key, mixed $message): void
+    {
+        $this->session()->addFlash($key, $message);
+    }
+
+    /**
+     * Get flash messages for the given key and clear them from the session.
+     *
+     * @return array<array-key, mixed>
+     */
+    protected function getFlash(string $key, array $default = []): array
+    {
+        return $this->session()->getFlash($key, $default);
+    }
+
+    /**
      * Hydrate a `#[Input]` DTO from the current request and validate
      * it against its `#[Assert]` attributes. On failure a 422
      * ValidationException propagates to the kernel error boundary,

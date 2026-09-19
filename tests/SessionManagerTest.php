@@ -41,7 +41,7 @@ class SessionManagerTest extends TestCase
     {
         $this->sessionManager->set('temp_key', 'value');
         $this->sessionManager->remove('temp_key');
-        
+
         $this->assertNull($this->sessionManager->get('temp_key'));
     }
 
@@ -53,7 +53,7 @@ class SessionManagerTest extends TestCase
         $this->sessionManager->set('key1', 'val1');
         $this->sessionManager->set('key2', 'val2');
         $this->sessionManager->clear();
-        
+
         $this->assertNull($this->sessionManager->get('key1'));
         $this->assertNull($this->sessionManager->get('key2'));
     }
@@ -65,7 +65,36 @@ class SessionManagerTest extends TestCase
     {
         $this->sessionManager->set('key1', 'val1');
         $this->sessionManager->destroy();
-        
+
         $this->assertFalse(isset($_SESSION['key1']));
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testFlashMessages(): void
+    {
+        $this->assertFalse($this->sessionManager->hasFlash('info'));
+        $this->assertSame([], $this->sessionManager->getFlash('info'));
+
+        $this->sessionManager->addFlash('info', 'First message');
+        $this->sessionManager->addFlash('info', 'Second message');
+        $this->sessionManager->addFlash('error', 'Something went wrong');
+
+        $this->assertTrue($this->sessionManager->hasFlash('info'));
+        $this->assertTrue($this->sessionManager->hasFlash('error'));
+        $this->assertFalse($this->sessionManager->hasFlash('warning'));
+
+        $infoFlashes = $this->sessionManager->getFlash('info');
+        $this->assertSame(['First message', 'Second message'], $infoFlashes);
+
+        // Flash messages should be cleared after getFlash()
+        $this->assertFalse($this->sessionManager->hasFlash('info'));
+        $this->assertSame([], $this->sessionManager->getFlash('info'));
+
+        // 'error' flash is still intact
+        $this->assertTrue($this->sessionManager->hasFlash('error'));
+        $this->assertSame(['Something went wrong'], $this->sessionManager->getFlash('error'));
+        $this->assertFalse($this->sessionManager->hasFlash('error'));
     }
 }
