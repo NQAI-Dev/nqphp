@@ -49,8 +49,21 @@ abstract class AbstractController
      * verbatim. Override `render` in subclasses to integrate a
      * templating engine.
      */
-    protected function render(string $body, int $status = 200, array $headers = []): Response
+    protected function renderString(string $body, int $status = 200, array $headers = []): Response
     {
+        return new Response($body, $status, $headers);
+    }
+
+    /**
+     * Return an HTML response from a native PHP view template.
+     * Assumes views are located in src/Feature/{Feature}/View or a global directory.
+     * This requires passing the explicit absolute path or using a configured ViewRenderer.
+     * For now, it delegates to a local renderer.
+     */
+    protected function render(string $viewPath, array $data = [], int $status = 200, array $headers = []): Response
+    {
+        $renderer = new \Nqphp\Core\View\ViewRenderer(dirname($viewPath));
+        $body = $renderer->render(basename($viewPath), $data);
         return new Response($body, $status, $headers);
     }
 
