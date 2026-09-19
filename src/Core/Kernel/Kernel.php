@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Kernel;
 
+use Nqphp\Core\Cache\Cache;
 use Nqphp\Core\Config\ConfigSchemaDiscoverer;
 use Nqphp\Core\Config\ConfigStore;
 use Nqphp\Core\Config\FeatureConfig;
@@ -101,6 +102,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Event\EventListenerDiscoverer */
     private readonly EventListenerDiscoverer $eventListenerDiscoverer;
 
+    /** @var \Nqphp\Core\Cache\Cache */
+    private readonly Cache $cache;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -172,8 +176,18 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->eventListenerDiscoverer->attach($this->eventDispatcher);
+        // Cache: in-process stores (default + namespaced) with TTL;
+        // exposed to controllers/features via $this->kernel->cache().
+        $this->cache = new Cache();
         $this->csrf = $csrf;
         $this->js = $js;
+    }
+
+    /** Cache manager accessor — default store via cache()->…, or a
+     *  namespaced store via cache('rendered')->… plus remember(). */
+    public function cache(): Cache
+    {
+        return $this->cache;
     }
 
     /** EventDispatcher accessor — register runtime listeners before
