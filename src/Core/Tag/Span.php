@@ -6,8 +6,6 @@ namespace Nqphp\Core\Tag;
 
 final class Span extends AbstractTag
 {
-    public function __construct()
-    {
-        $this->tag = 'span';
-    }
+    protected string $tag = 'span';
+    protected bool $selfClosing = false;
 }

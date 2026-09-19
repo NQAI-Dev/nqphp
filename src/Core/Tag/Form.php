@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Tag;
 
-final class Li extends AbstractTag
+final class Form extends AbstractTag
 {
-    protected string $tag = 'li';
+    protected string $tag = 'form';
     protected bool $selfClosing = false;
 }

@@ -48,23 +48,144 @@ abstract class AbstractTag
     /** @var string Rendered child HTML (concatenation of appendChild calls). */
     protected string $children = '';
 
-    public function __construct(array $attributes = [], string|self|array $children = [])
+    public function __construct(mixed ...$args)
     {
-        $this->setAttributes($attributes);
-        
-        if (is_array($children)) {
-            foreach ($children as $child) {
-                if (is_string($child)) {
-                    $this->children .= self::escape($child);
-                } elseif ($child instanceof self) {
-                    $this->appendChild($child);
-                }
-            }
-        } elseif (is_string($children)) {
-            $this->setContent($children);
-        } elseif ($children instanceof self) {
-            $this->appendChild($children);
+        if (empty($args)) {
+            return;
         }
+
+        // If first argument is array with string keys, treat as attributes
+        $first = $args[0];
+        $childrenArgs = $args;
+        if (is_array($first) && !array_is_list($first)) {
+            $this->setAttributes($first);
+            array_shift($childrenArgs);
+        }
+
+        foreach ($childrenArgs as $child) {
+            $this->append($child);
+        }
+    }
+
+    /**
+     * Append one or multiple child nodes, text, or nested arrays.
+     */
+    public function append(mixed ...$children): static
+    {
+        foreach ($children as $child) {
+            if ($child === null || $child === false) {
+                continue;
+            }
+            if (is_array($child)) {
+                $this->append(...$child);
+            } elseif ($child instanceof self) {
+                $this->appendChild($child);
+            } elseif ($child instanceof \Stringable || is_scalar($child)) {
+                $this->children .= self::escape((string) $child);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Short fluent aliases
+     */
+    public function class(string ...$names): static
+    {
+        return $this->setClass(...$names);
+    }
+
+    public function id(string $id): static
+    {
+        return $this->setAttribute('id', $id);
+    }
+
+    public function style(string $style): static
+    {
+        return $this->setAttribute('style', $style);
+    }
+
+    public function attr(string $name, string|int|float|bool $value): static
+    {
+        return $this->setAttribute($name, (string) $value);
+    }
+
+    public function data(string $key, string|int|float|bool $value): static
+    {
+        return $this->setAttribute('data-' . $key, (string) $value);
+    }
+
+    public function textContent(string $text): static
+    {
+        return $this->setContent($text);
+    }
+
+    public function html(string $rawHtml): static
+    {
+        $this->children .= $rawHtml;
+        return $this;
+    }
+
+    public function when(mixed $condition, callable $callback): static
+    {
+        $res = is_callable($condition) ? $condition($this) : (bool) $condition;
+        if ($res) {
+            $callback($this);
+        }
+        return $this;
+    }
+
+    /**
+     * nq.js declarative UI integrations
+     */
+    public function nqGet(string $url): static
+    {
+        return $this->setAttribute('data-nq-get', $url);
+    }
+
+    public function nqPost(string $url): static
+    {
+        return $this->setAttribute('data-nq-post', $url);
+    }
+
+    public function nqPut(string $url): static
+    {
+        return $this->setAttribute('data-nq-put', $url);
+    }
+
+    public function nqDelete(string $url): static
+    {
+        return $this->setAttribute('data-nq-delete', $url);
+    }
+
+    public function nqTarget(string $cssSelector): static
+    {
+        return $this->setAttribute('data-nq-target', $cssSelector);
+    }
+
+    public function nqSwap(string $strategy): static
+    {
+        return $this->setAttribute('data-nq-swap', $strategy);
+    }
+
+    public function nqTrigger(string $event): static
+    {
+        return $this->setAttribute('data-nq-trigger', $event);
+    }
+
+    public function nqIndicator(string $cssSelector): static
+    {
+        return $this->setAttribute('data-nq-indicator', $cssSelector);
+    }
+
+    public function nqConfirm(string $message): static
+    {
+        return $this->setAttribute('data-nq-confirm', $message);
+    }
+
+    public function nqPushUrl(bool $push = true): static
+    {
+        return $this->setAttribute('data-nq-push-url', $push ? 'true' : 'false');
     }
 
 

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Tag;
 
-class H3 extends AbstractTag
+final class H3 extends AbstractTag
 {
     protected string $tag = 'h3';
+    protected bool $selfClosing = false;
 }

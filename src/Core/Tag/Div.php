@@ -6,8 +6,6 @@ namespace Nqphp\Core\Tag;
 
 final class Div extends AbstractTag
 {
-    public function __construct()
-    {
-        $this->tag = 'div';
-    }
+    protected string $tag = 'div';
+    protected bool $selfClosing = false;
 }

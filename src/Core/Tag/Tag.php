@@ -5,126 +5,200 @@ declare(strict_types=1);
 namespace Nqphp\Core\Tag;
 
 /**
- * Static factory for typed HTML tag builders.
+ * Static factory for typed HTML tag builders with flexible constructor.
  *
  * Usage:
- *   echo Tag::div()->setClass('container')->setContent('hi');
- *   echo Tag::span()->setContent('inline');
- *   echo Tag::a('/about', 'About');
+ *   // Simple child / text:
+ *   Tag::p('Hello world');
+ *   Tag::button('Submit')->class('btn', 'btn-primary');
  *
- * New HTML elements can be added by adding a static method here
- * once the concrete subclass ships. No magic __call — explicit
- * factory methods give IDE autocomplete and static analysis.
+ *   // Nested elements (variadic):
+ *   Tag::div(
+ *       Tag::h1('Dashboard'),
+ *       Tag::p('Welcome back!'),
+ *       Tag::button('Action')->nqGet('/api/ping')->nqTarget('#res')
+ *   )->class('card');
+ *
+ *   // With attributes array:
+ *   Tag::div(['class' => 'container', 'id' => 'app'],
+ *       Tag::span('Loaded')
+ *   );
  */
 final class Tag
 {
-    /** @return Div a fresh, empty <div> builder. */
-    public static function div(array $attributes = [], string|AbstractTag|array $children = []): Div
+    public static function div(mixed ...$args): Div
     {
-        return new Div($attributes, $children);
+        return new Div(...$args);
     }
 
-    public static function h1(array $attributes = [], string|AbstractTag|array $children = []): H1
+    public static function h1(mixed ...$args): H1
     {
-        return new H1($attributes, $children);
+        return new H1(...$args);
     }
 
-    public static function h2(array $attributes = [], string|AbstractTag|array $children = []): H2
+    public static function h2(mixed ...$args): H2
     {
-        return new H2($attributes, $children);
+        return new H2(...$args);
     }
 
-    public static function h4(array $attributes = [], string|AbstractTag|array $children = []): H4
+    public static function h3(mixed ...$args): H3
     {
-        return new H4($attributes, $children);
+        return new H3(...$args);
     }
 
-    public static function h3(array $attributes = [], string|AbstractTag|array $children = []): H3
+    public static function h4(mixed ...$args): H4
     {
-        return new H3($attributes, $children);
+        return new H4(...$args);
     }
 
-    public static function p(array $attributes = [], string|AbstractTag|array $children = []): P
+    public static function p(mixed ...$args): P
     {
-        return new P($attributes, $children);
+        return new P(...$args);
     }
 
-    public static function span(array $attributes = [], string|AbstractTag|array $children = []): Span
+    public static function span(mixed ...$args): Span
     {
-        return new Span($attributes, $children);
-    }
-    public static function pre(array $attributes = [], string|AbstractTag|array $children = []): Pre
-    {
-        return new Pre($attributes, $children);
+        return new Span(...$args);
     }
 
-    public static function code(array $attributes = [], string|AbstractTag|array $children = []): Code
+    public static function pre(mixed ...$args): Pre
     {
-        return new Code($attributes, $children);
+        return new Pre(...$args);
     }
 
-
-    public static function ul(array $attributes = [], string|AbstractTag|array $children = []): Ul
+    public static function code(mixed ...$args): Code
     {
-        return new Ul($attributes, $children);
+        return new Code(...$args);
     }
 
-    public static function li(array $attributes = [], string|AbstractTag|array $children = []): Li
+    public static function ul(mixed ...$args): Ul
     {
-        return new Li($attributes, $children);
+        return new Ul(...$args);
     }
 
-    /** @return A a fresh, empty <a> builder. */
-    public static function a(array $attributes = [], string|AbstractTag|array $children = []): A
+    public static function li(mixed ...$args): Li
     {
-        return new A($attributes, $children);
+        return new Li(...$args);
     }
 
-    /** @return Img a fresh, empty <img> builder (self-closing). */
-    public static function img(array $attributes = []): Img
+    public static function a(mixed ...$args): A
     {
-        return new Img($attributes, []);
+        return new A(...$args);
     }
 
-    /** @return Br a fresh, empty <br> builder (self-closing). */
-    public static function br(array $attributes = []): Br
+    public static function img(mixed ...$args): Img
     {
-        return new Br($attributes, []);
+        return new Img(...$args);
     }
 
-    /** @return Hr a fresh, empty <hr> builder (self-closing). */
-    public static function hr(array $attributes = []): Hr
+    public static function br(mixed ...$args): Br
     {
-        return new Hr($attributes, []);
+        return new Br(...$args);
     }
 
-    /** @return Input a fresh, empty <input> builder (self-closing). */
-    public static function input(array $attributes = []): Input
+    public static function hr(mixed ...$args): Hr
     {
-        return new Input($attributes, []);
+        return new Hr(...$args);
     }
 
-    /** @return Textarea a fresh, empty <textarea> builder. */
-    public static function textarea(array $attributes = [], string|AbstractTag|array $children = []): Textarea
+    public static function input(mixed ...$args): Input
     {
-        return new Textarea($attributes, $children);
+        return new Input(...$args);
     }
 
-    /** @return Label a fresh, empty <label> builder. */
-    public static function label(array $attributes = [], string|AbstractTag|array $children = []): Label
+    public static function textarea(mixed ...$args): Textarea
     {
-        return new Label($attributes, $children);
+        return new Textarea(...$args);
     }
 
-    /** @return Select a fresh, empty <select> builder. */
-    public static function select(array $attributes = [], string|AbstractTag|array $children = []): Select
+    public static function label(mixed ...$args): Label
     {
-        return new Select($attributes, $children);
+        return new Label(...$args);
     }
 
-    /** @return Option a fresh, empty <option> builder. */
-    public static function option(array $attributes = [], string|AbstractTag|array $children = []): Option
+    public static function select(mixed ...$args): Select
     {
-        return new Option($attributes, $children);
+        return new Select(...$args);
     }
+
+    public static function option(mixed ...$args): Option
+    {
+        return new Option(...$args);
+    }
+
+    public static function button(mixed ...$args): Button
+    {
+        return new Button(...$args);
+    }
+
+    public static function form(mixed ...$args): Form
+    {
+        return new Form(...$args);
+    }
+
+    public static function table(mixed ...$args): Table
+    {
+        return new Table(...$args);
+    }
+
+    public static function thead(mixed ...$args): Thead
+    {
+        return new Thead(...$args);
+    }
+
+    public static function tbody(mixed ...$args): Tbody
+    {
+        return new Tbody(...$args);
+    }
+
+    public static function tr(mixed ...$args): Tr
+    {
+        return new Tr(...$args);
+    }
+
+    public static function th(mixed ...$args): Th
+    {
+        return new Th(...$args);
+    }
+
+    public static function td(mixed ...$args): Td
+    {
+        return new Td(...$args);
+    }
+
+    public static function nav(mixed ...$args): Nav
+    {
+        return new Nav(...$args);
+    }
+
+    public static function header(mixed ...$args): Header
+    {
+        return new Header(...$args);
+    }
+
+    public static function footer(mixed ...$args): Footer
+    {
+        return new Footer(...$args);
+    }
+
+    public static function main(mixed ...$args): Main
+    {
+        return new Main(...$args);
+    }
+
+    public static function section(mixed ...$args): Section
+    {
+        return new Section(...$args);
+    }
+
+    public static function article(mixed ...$args): Article
+    {
+        return new Article(...$args);
+    }
+
+    public static function aside(mixed ...$args): Aside
+    {
+        return new Aside(...$args);
+    }
+
 }
