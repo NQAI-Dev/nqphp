@@ -243,4 +243,16 @@ abstract class AbstractController
         }
         return $this->kernel->httpClient($defaultOptions);
     }
+
+    /**
+     * Translate a message key.
+     */
+    protected function trans(string $key, array $parameters = [], ?string $locale = null): string
+    {
+        if ($this->kernel === null) {
+            return $key;
+        }
+        return $this->kernel->translator()->trans($key, $parameters, $locale);
+    }
+
 }

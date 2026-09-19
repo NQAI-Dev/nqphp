@@ -711,4 +711,14 @@ final class Kernel implements HttpKernelInterface
     {
         return $this->js;
     }
+
+    /**
+     * Get or initialize Translator instance.
+     */
+    public function translator(string $defaultLocale = 'en', string $fallbackLocale = 'en'): \Nqphp\Core\I18n\TranslatorInterface
+    {
+        $dir = $this->projectDir . '/translations';
+        return new \Nqphp\Core\I18n\Translator($dir, $defaultLocale, $fallbackLocale);
+    }
+
 }
