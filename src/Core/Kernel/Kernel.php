@@ -620,6 +620,18 @@ final class Kernel implements HttpKernelInterface
                     $args[] = $this->session;
                     continue;
                 }
+                if (is_a($this->entityManager, $typeName)) {
+                    $args[] = $this->entityManager;
+                    continue;
+                }
+                if (is_a($this->eventDispatcher, $typeName)) {
+                    $args[] = $this->eventDispatcher;
+                    continue;
+                }
+                if (is_a($this->cache, $typeName)) {
+                    $args[] = $this->cache;
+                    continue;
+                }
 
                 $matches = [];
                 foreach ($this->serviceDiscoverer->discover()->all() as $serviceName => $descriptor) {

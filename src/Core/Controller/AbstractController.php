@@ -136,4 +136,11 @@ abstract class AbstractController
         }
         return $dto;
     }
+    /**
+     * Helper to access the framework EntityManager instance.
+     */
+    protected function em(): \Nqphp\Core\Entity\EntityManager
+    {
+        return $this->kernel->entityManager();
+    }
 }
