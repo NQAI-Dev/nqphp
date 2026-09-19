@@ -27,7 +27,7 @@ use Symfony\Component\HttpFoundation\Request;
  * This is intentionally minimal — if your feature needs per-user,
  * per-form, or time-bound tokens, swap this manager for one that does.
  */
-final class CsrfTokenManager
+final class CsrfTokenManager implements CsrfTokenManagerInterface
 {
     public const COOKIE_NAME = 'nqphp_csrf';
     public const HEADER_NAME = 'X-CSRF-Token';
