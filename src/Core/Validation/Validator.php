@@ -65,6 +65,26 @@ class Validator
         return !$this->passes($data, $rules);
     }
 
+    /**
+     * Validate data and throw ValidationException if errors exist.
+     * Returns the validated data or object on success.
+     *
+     * @template T of array|object
+     * @param T $data
+     * @param array<string, string> $rules
+     * @return T
+     * @throws ValidationException
+     */
+    public function validateOrThrow(array|object $data, array $rules = []): array|object
+    {
+        $errors = $this->validate($data, $rules);
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
+        }
+
+        return $data;
+    }
+
     public function getErrors(): array
     {
         return $this->errors;
