@@ -18,9 +18,13 @@ use Nqphp\Core\Event\EventDispatcher;
 use Nqphp\Core\Event\EventListenerDiscoverer;
 use Nqphp\Core\Event\KernelRequestEvent;
 use Nqphp\Core\Event\KernelResponseEvent;
+use Nqphp\Core\Http\ErrorResponseFormatter;
 use Nqphp\Core\Input\RequestData;
 use Nqphp\Core\Js\JsModuleServer;
+use Nqphp\Core\Middleware\ErrorHandlerMiddleware;
 use Nqphp\Core\Middleware\MiddlewareDiscoverer;
+use Nqphp\Core\Middleware\MiddlewareDispatcher;
+use Nqphp\Core\Middleware\MiddlewareInterface;
 use Nqphp\Core\Middleware\RouteHookDiscoverer;
 use Nqphp\Core\Routing\KernelUrlGenerator;
 use Nqphp\Core\Routing\Router;
@@ -31,6 +35,7 @@ use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Throwable;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
@@ -105,6 +110,12 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Cache\Cache */
     private readonly Cache $cache;
 
+    /** @var \Nqphp\Core\Http\ErrorResponseFormatter */
+    private readonly ErrorResponseFormatter $errorFormatter;
+
+    /** @var list<\Nqphp\Core\Middleware\MiddlewareInterface> Runtime onion middlewares (outermost first). */
+    private array $pipes = [];
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -112,6 +123,7 @@ final class Kernel implements HttpKernelInterface
         string $projectDir,
         ?CsrfTokenManager $csrf = null,
         ?JsModuleServer $js = null,
+        ?ErrorResponseFormatter $errorFormatter = null,
     ) {
         $this->projectDir = $projectDir;
         $this->commandDirs = [
@@ -179,8 +191,31 @@ final class Kernel implements HttpKernelInterface
         // Cache: in-process stores (default + namespaced) with TTL;
         // exposed to controllers/features via $this->kernel->cache().
         $this->cache = new Cache();
+        $this->errorFormatter = $errorFormatter
+            ?? new ErrorResponseFormatter(debug: ($_SERVER['NQPHP_DEBUG'] ?? '') !== '');
         $this->csrf = $csrf;
         $this->js = $js;
+    }
+
+    /**
+     * Register a runtime onion middleware (MiddlewareInterface).
+     *
+     * Pipes wrap the whole request pipeline (events → CSRF →
+     * discovered #[Middleware] → route hooks → controller) and may
+     * modify the response on the way out. First registered =
+     * outermost. The error handler (when $catch=true) always sits
+     * outside all pipes.
+     */
+    public function pipe(MiddlewareInterface $middleware): self
+    {
+        $this->pipes[] = $middleware;
+        return $this;
+    }
+
+    /** @return list<\Nqphp\Core\Middleware\MiddlewareInterface> */
+    public function pipes(): array
+    {
+        return $this->pipes;
     }
 
     /** Cache manager accessor — default store via cache()->…, or a
@@ -351,6 +386,27 @@ final class Kernel implements HttpKernelInterface
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
     {
+        try {
+            return $this->handleRaw($request, $type);
+        } catch (Throwable $exception) {
+            if (!$catch) {
+                throw $exception;
+            }
+            // Top-level error boundary: any Throwable escaping the
+            // pipeline is converted to a safe, content-negotiated
+            // response. kernel.response is intentionally skipped —
+            // a misbehaving listener may be the failure cause.
+            return $this->withCsrfCookie($request, $this->errorFormatter->format($request, $exception));
+        }
+    }
+
+    /**
+     * Uncaught pipeline. Framework-internal `/_nqphp/...` namespace
+     * first (user pipes never shadow the runtime), then the runtime
+     * onion pipeline (Kernel::pipe()) wrapping the core lifecycle.
+     */
+    private function handleRaw(Request $request, int $type): Response
+    {
         // Framework-internal namespace: JS modules + future framework
         // endpoints. Resolved before user routes so feature code never
         // shadows the runtime.
@@ -363,6 +419,27 @@ final class Kernel implements HttpKernelInterface
             return new Response('Not Found', 404);
         }
 
+        // Runtime onion pipeline: first pipe registered = outermost;
+        // the core handler runs last, inside every pipe. Middleware-
+        // Dispatcher chains process($request, $next) closures.
+        $dispatcher = new MiddlewareDispatcher(
+            fn (Request $req): Response => $this->handleCore($req, $type)
+        );
+        foreach ($this->pipes as $pipe) {
+            $dispatcher->add($pipe);
+        }
+        return $dispatcher->dispatch($request);
+    }
+
+    /**
+     * Core request lifecycle: kernel.request event → CSRF enforcement
+     * → discovered #[Middleware] handlers (terminal style, order
+     * ascending) → routing → BeforeRoute hooks → controller dispatch.
+     * Every exit goes through respond() (kernel.response + CSRF
+     * cookie).
+     */
+    private function handleCore(Request $request, int $type): Response
+    {
         // kernel.request — dispatched before CSRF, middleware and
         // routing. A listener calling setResponse() short-circuits
         // the whole pipeline below.

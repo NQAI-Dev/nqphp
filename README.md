@@ -308,7 +308,14 @@ DBAL-style portability, swap the `EntityManager` wiring for
 * ✅ JS-module runtime helper — framework `csrf()`, `fetchJson()`,
   per-feature `client.js` serving.
 * ✅ Middleware pipeline — `#[Middleware]` attribute + auto-discovery
-  + Kernel runtime invocation + tests.
+  + Kernel runtime invocation + tests. Additionally: onion-style
+  runtime pipeline via `Kernel::pipe(MiddlewareInterface)` — pipes
+  wrap the whole lifecycle (events → CSRF → discovered middleware →
+  hooks → controller) and may transform the outgoing response
+  (`MiddlewareDispatcher`); top-level error boundary honours
+  `HttpKernelInterface` `$catch` semantics and converts any escaping
+  `Throwable` into a safe content-negotiated response via
+  `ErrorResponseFormatter` (`NQPHP_DEBUG=1` adds debug details).
 * ✅ Event system integrated with the Kernel — `KernelRequestEvent`
   (`kernel.request`) dispatched before CSRF / middleware / routing
   (listener `setResponse()` short-circuits the pipeline) and

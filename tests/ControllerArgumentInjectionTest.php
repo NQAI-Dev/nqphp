@@ -136,9 +136,21 @@ PHP,
         ]);
         $this->addRoute($kernel, '/_test/ambiguous', ControllerArgumentFixture::class . '::ambiguous');
 
+        // catch=true (default, HttpKernelInterface semantics): the
+        // kernel's error boundary converts the throw into a 500
+        // response. catch=false: the exception propagates to caller.
+        $response = $kernel->handle(
+            Request::create('/_test/ambiguous', 'GET', server: ['HTTP_ACCEPT' => 'text/plain'])
+        );
+        self::assertSame(500, $response->getStatusCode());
+        self::assertSame('Internal Server Error', $response->getContent());
+        // Symfony marks 4xx/5xx responses "private" automatically;
+        // the formatter's own contribution is the no-store directive.
+        self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('matches multiple services (test.first, test.second)');
-        $kernel->handle(Request::create('/_test/ambiguous'));
+        $kernel->handle(Request::create('/_test/ambiguous'), \Symfony\Component\HttpKernel\HttpKernelInterface::MAIN_REQUEST, false);
     }
 
     /**
