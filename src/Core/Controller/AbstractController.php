@@ -255,4 +255,14 @@ abstract class AbstractController
         return $this->kernel->translator()->trans($key, $parameters, $locale);
     }
 
+
+    /**
+     * Create a scoped HTML view with isolated CSS and i18n support.
+     */
+    protected function scoped(string $html, string $css = ''): \Nqphp\Core\View\ScopedView
+    {
+        $translator = $this->kernel !== null ? $this->kernel->translator() : null;
+        return new \Nqphp\Core\View\ScopedView($html, $css, $translator);
+    }
+
 }
