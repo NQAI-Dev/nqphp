@@ -494,32 +494,72 @@ final class Kernel implements HttpKernelInterface
     }
 
     /**
-     * Resolve route parameters + Request into method argument order.
+     * Resolve route parameters and injectable dependencies into controller
+     * method argument order. Explicit route values always take precedence;
+     * class-typed parameters are resolved from the service registry.
      *
-     * Phase 1: positional binding of route placeholders. The Request
-     * is injected if the parameter is typed Request.
-     *
-     * @param \ReflectionMethod $method
      * @param array<string,mixed> $params
+     *
+     * @throws \RuntimeException when a required argument cannot be resolved
      */
     private function resolveArgs(\ReflectionMethod $method, array $params, Request $request): array
     {
         $args = [];
         foreach ($method->getParameters() as $param) {
             $name = $param->getName();
-            if (isset($params[$name])) {
+            if (array_key_exists($name, $params)) {
                 $args[] = $params[$name];
                 continue;
             }
-            if ($param->getType() && $param->getType()->getName() === Request::class) {
-                $args[] = $request;
-                continue;
+
+            $type = $param->getType();
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                $typeName = $type->getName();
+                if (is_a($request, $typeName)) {
+                    $args[] = $request;
+                    continue;
+                }
+                if (is_a($this, $typeName)) {
+                    $args[] = $this;
+                    continue;
+                }
+
+                $matches = [];
+                foreach ($this->serviceDiscoverer->discover()->all() as $serviceName => $descriptor) {
+                    if (is_a($descriptor['class'], $typeName, true)) {
+                        $matches[] = $serviceName;
+                    }
+                }
+                sort($matches, SORT_STRING);
+                if (count($matches) === 1) {
+                    $args[] = $this->service($matches[0]);
+                    continue;
+                }
+                if (count($matches) > 1) {
+                    throw new \RuntimeException(sprintf(
+                        'Cannot autowire %s::$%s: %s matches multiple services (%s)',
+                        $method->getName(),
+                        $name,
+                        $typeName,
+                        implode(', ', $matches),
+                    ));
+                }
             }
+
             if ($param->isDefaultValueAvailable()) {
                 $args[] = $param->getDefaultValue();
                 continue;
             }
-            $args[] = null;
+            if ($param->allowsNull()) {
+                $args[] = null;
+                continue;
+            }
+
+            throw new \RuntimeException(sprintf(
+                'Cannot resolve controller argument %s::$%s',
+                $method->getName(),
+                $name,
+            ));
         }
         return $args;
     }
