@@ -72,14 +72,13 @@ final class ScopedCssCompiler
     }
 
     /**
-     * Scope a single CSS selector.
+     * Scope a single CSS selector under the scope container.
      * Examples:
      * - ":scope" -> '[data-nq-s="s-123"]'
      * - ":scope.active" -> '[data-nq-s="s-123"].active'
-     * - "h3" -> 'h3[data-nq-s="s-123"]'
-     * - ".btn:hover" -> '.btn[data-nq-s="s-123"]:hover'
-     * - "div > span" -> 'div[data-nq-s="s-123"] > span[data-nq-s="s-123"]'
-     * - ".card .desc" -> '.card[data-nq-s="s-123"] .desc[data-nq-s="s-123"]'
+     * - "h3" -> '[data-nq-s="s-123"] h3'
+     * - "button.btn:hover" -> '[data-nq-s="s-123"] button.btn:hover'
+     * - "div > span" -> '[data-nq-s="s-123"] div > span'
      */
     public static function scopeSelector(string $selector, string $scopeAttr): string
     {
@@ -89,32 +88,7 @@ final class ScopedCssCompiler
             return str_replace(':scope', $scopeAttr, $selector);
         }
 
-        // Split by combinators: space, >, +, ~
-        $parts = preg_split('/(\s*[\s>+~]\s*)/', $selector, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-        if (!$parts) {
-            return $selector . $scopeAttr;
-        }
-
-        $result = '';
-        foreach ($parts as $part) {
-            $trimmed = trim($part);
-            if ($trimmed === '' || in_array($trimmed, ['>', '+', '~'], true)) {
-                $result .= $part;
-                continue;
-            }
-
-            // If it has pseudo-elements (::before, ::after) or pseudo-classes (:hover)
-            // attribute must be placed before pseudo-elements/classes:
-            // a:hover -> a[data-nq-s="..."]:hover
-            // a::after -> a[data-nq-s="..."]::after
-            if (preg_match('/^([^:]+)(::?.*)$/', $part, $matches)) {
-                $result .= $matches[1] . $scopeAttr . $matches[2];
-            } else {
-                $result .= $part . $scopeAttr;
-            }
-        }
-
-        return $result;
+        return $scopeAttr . ' ' . $selector;
     }
 
     /**

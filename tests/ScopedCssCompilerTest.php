@@ -19,17 +19,17 @@ class ScopedCssCompilerTest extends TestCase
         );
 
         $this->assertSame(
-            'h3[data-nq-s="s-test1"]',
+            '[data-nq-s="s-test1"] h3',
             ScopedCssCompiler::scopeSelector('h3', $scopeAttr)
         );
 
         $this->assertSame(
-            'button.btn[data-nq-s="s-test1"]:hover',
+            '[data-nq-s="s-test1"] button.btn:hover',
             ScopedCssCompiler::scopeSelector('button.btn:hover', $scopeAttr)
         );
 
         $this->assertSame(
-            'div[data-nq-s="s-test1"] > span[data-nq-s="s-test1"]',
+            '[data-nq-s="s-test1"] div > span',
             ScopedCssCompiler::scopeSelector('div > span', $scopeAttr)
         );
     }
@@ -59,7 +59,7 @@ class ScopedCssCompilerTest extends TestCase
 
         $this->assertStringNotContainsString('/* General styles */', $compiled);
         $this->assertStringContainsString('[data-nq-s="s-abc123"]{background:#000;padding:10px}', $compiled);
-        $this->assertStringContainsString('h2[data-nq-s="s-abc123"],p.intro[data-nq-s="s-abc123"]{color:red;font-size:14px}', $compiled);
-        $this->assertStringContainsString('@media (max-width: 600px){span.badge[data-nq-s="s-abc123"]{display:none}}', $compiled);
+        $this->assertStringContainsString('[data-nq-s="s-abc123"] h2,[data-nq-s="s-abc123"] p.intro{color:red;font-size:14px}', $compiled);
+        $this->assertStringContainsString('@media (max-width: 600px){[data-nq-s="s-abc123"] span.badge{display:none}}', $compiled);
     }
 }
