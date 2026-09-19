@@ -80,6 +80,19 @@ abstract class AbstractController
     }
 
     /**
+     * Session manager helper.
+     */
+    protected function session(): \Nqphp\Core\Session\SessionInterface
+    {
+        if ($this->kernel === null) {
+            throw new \RuntimeException(
+                'Cannot access session outside a kernel dispatch: kernel reference is not set.'
+            );
+        }
+        return $this->kernel->session();
+    }
+
+    /**
      * Hydrate a `#[Input]` DTO from the current request and validate
      * it against its `#[Assert]` attributes. On failure a 422
      * ValidationException propagates to the kernel error boundary,

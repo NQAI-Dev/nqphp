@@ -110,6 +110,9 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Cache\Cache */
     private readonly Cache $cache;
 
+    /** @var \Nqphp\Core\Session\SessionInterface */
+    private readonly \Nqphp\Core\Session\SessionInterface $session;
+
     /** @var \Nqphp\Core\Http\ErrorResponseFormatter */
     private readonly ErrorResponseFormatter $errorFormatter;
 
@@ -191,6 +194,7 @@ final class Kernel implements HttpKernelInterface
         // Cache: in-process stores (default + namespaced) with TTL;
         // exposed to controllers/features via $this->kernel->cache().
         $this->cache = new Cache();
+        $this->session = new \Nqphp\Core\Session\SessionManager();
         $this->errorFormatter = $errorFormatter
             ?? new ErrorResponseFormatter(debug: ($_SERVER['NQPHP_DEBUG'] ?? '') !== '');
         $this->csrf = $csrf;
@@ -223,6 +227,12 @@ final class Kernel implements HttpKernelInterface
     public function cache(): Cache
     {
         return $this->cache;
+    }
+
+    /** Session manager accessor. */
+    public function session(): \Nqphp\Core\Session\SessionInterface
+    {
+        return $this->session;
     }
 
     /** EventDispatcher accessor — register runtime listeners before
@@ -604,6 +614,10 @@ final class Kernel implements HttpKernelInterface
                 }
                 if (is_a($this, $typeName)) {
                     $args[] = $this;
+                    continue;
+                }
+                if (is_a($this->session, $typeName)) {
+                    $args[] = $this->session;
                     continue;
                 }
 
