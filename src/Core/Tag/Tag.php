@@ -205,9 +205,9 @@ final class Tag
     /**
      * Render raw unescaped HTML.
      */
-    public static function raw(string $html): string
+    public static function raw(string $html): RawHtml
     {
-        return $html;
+        return new RawHtml($html);
     }
 
 }
