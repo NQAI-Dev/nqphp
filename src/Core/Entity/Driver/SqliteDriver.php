@@ -28,6 +28,11 @@ final class SqliteDriver implements DriverInterface
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
+    public function getPdo(): PDO
+    {
+        return $this->pdo;
+    }
+
     public function persist(string $entityName, array $data): int
     {
         $this->ensureTable($entityName);

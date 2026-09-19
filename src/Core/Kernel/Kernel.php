@@ -721,4 +721,11 @@ final class Kernel implements HttpKernelInterface
         return new \Nqphp\Core\I18n\Translator($dir, $defaultLocale, $fallbackLocale);
     }
 
+    public function pdo(): ?\PDO
+    {
+        if ($this->driver instanceof \Nqphp\Core\Entity\Driver\SqliteDriver) {
+            return $this->driver->getPdo();
+        }
+        return null;
+    }
 }
