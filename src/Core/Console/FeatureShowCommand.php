@@ -28,20 +28,47 @@ final class FeatureShowCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $name = $input->getArgument('name');
-        
-        // tests might run from different dirs, so find real project dir or just let Hello pass
-        if ($name === 'Hello' || is_dir(dirname(__DIR__, 3) . "/src/Feature/$name")) {
-            $io->title("Feature: $name");
-            
-            // config
-            $io->section('config:');
-            $io->text('cached_ttl'); // minimal for test
-            
+        $name = (string) $input->getArgument('name');
+        $features = $this->kernel->featureConfig()->load();
+
+        if (!\in_array($name, $features->features(), true)) {
+            $io->error("Feature '$name' not discovered.");
+            return Command::FAILURE;
+        }
+
+        $io->title("Feature: $name");
+        $config = $features->all($name);
+
+        if ($config === []) {
+            $io->note('No configuration keys.');
             return Command::SUCCESS;
         }
 
-        $io->error("Feature '$name' not discovered.");
-        return Command::FAILURE;
+        ksort($config);
+        $rows = [];
+        foreach ($config as $key => $value) {
+            $rows[] = [(string) $key, $this->formatValue($value)];
+        }
+
+        $io->section('Configuration');
+        $io->table(['KEY', 'VALUE'], $rows);
+
+        return Command::SUCCESS;
+    }
+
+    private function formatValue(mixed $value): string
+    {
+        if ($value === null) {
+            return 'null';
+        }
+        if (\is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (\is_scalar($value)) {
+            return (string) $value;
+        }
+
+        $encoded = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return $encoded === false ? get_debug_type($value) : $encoded;
     }
 }

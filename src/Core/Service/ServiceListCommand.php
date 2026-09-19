@@ -22,12 +22,20 @@ final class ServiceListCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $services = $this->kernel->serviceDiscoverer()->discover()->all();
+        ksort($services);
+
+        $rows = [];
+        foreach ($services as $name => $descriptor) {
+            $rows[] = [$name, $descriptor['scope'], $descriptor['class']];
+        }
+
         $io->title('Discovered services');
-        
-        $io->table(
-            ['NAME', 'SCOPE', 'CLASS'],
-            []
-        );
+        $io->table(['NAME', 'SCOPE', 'CLASS'], $rows);
+
+        if ($rows === []) {
+            $io->note('No services discovered.');
+        }
 
         return Command::SUCCESS;
     }

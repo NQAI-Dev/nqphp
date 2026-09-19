@@ -10,49 +10,71 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/**
- * Phase 2 DX (feature:show command) test.
- *
- * Verifies the single-feature report command outputs the expected
- * sections (config, routes, middlewares) and fails loudly when
- * the feature name doesn't exist.
- */
 final class FeatureShowCommandTest extends TestCase
 {
-    private const PROJECT_DIR = __DIR__ . '/..';
+    private string $projectDir;
 
-    public function testCommandOutputsExpectedHeader(): void
+    protected function setUp(): void
     {
-        $kernel = new Kernel(self::PROJECT_DIR);
-        $app = new Application('nqphp');
-        $cmdClass = new \ReflectionClass(\Nqphp\Core\Console\FeatureShowCommand::class);
-        $cmd = $cmdClass->newInstance($kernel);
-        $app->add($cmd);
+        $this->projectDir = sys_get_temp_dir() . '/nqphp-feature-command-' . bin2hex(random_bytes(6));
+        mkdir($this->projectDir . '/src/Feature/Blog', 0777, true);
+        file_put_contents(
+            $this->projectDir . '/src/Feature/Blog/config.php',
+            "<?php\nreturn ['enabled' => true, 'cache_ttl' => 120, 'hosts' => ['api.example.test']];\n"
+        );
+    }
 
-        $tester = new CommandTester($app->find('feature:show'));
-        $tester->execute(['name' => 'NoSuchFeature']);
-        $output = $tester->getDisplay();
+    protected function tearDown(): void
+    {
+        $this->removeDirectory($this->projectDir);
+    }
 
-        // Unknown feature should fail loudly with an error message
-        self::assertStringContainsString('not discovered', $output);
+    public function testCommandFailsForFeatureWithoutConfiguration(): void
+    {
+        mkdir($this->projectDir . '/src/Feature/Empty');
+        $tester = $this->runCommand('Empty');
+
+        self::assertStringContainsString('not discovered', $tester->getDisplay());
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
     }
 
-    public function testCommandReportsConfigForKnownFeature(): void
+    public function testCommandReportsActualConfigurationValues(): void
     {
-        $kernel = new Kernel(self::PROJECT_DIR);
-        $app = new Application('nqphp');
-        $cmdClass = new \ReflectionClass(\Nqphp\Core\Console\FeatureShowCommand::class);
-        $cmd = $cmdClass->newInstance($kernel);
-        $app->add($cmd);
-
-        $tester = new CommandTester($app->find('feature:show'));
-        $tester->execute(['name' => 'Hello']);
+        $tester = $this->runCommand('Blog');
         $output = $tester->getDisplay();
 
-        // Should report the feature header + the cached_ttl config key from Hello feature
-        self::assertStringContainsString('Feature: Hello', $output);
-        self::assertStringContainsString('config:', $output);
+        self::assertStringContainsString('Feature: Blog', $output);
+        self::assertStringContainsString('Configuration', $output);
+        self::assertStringContainsString('cache_ttl', $output);
+        self::assertStringContainsString('120', $output);
+        self::assertStringContainsString('enabled', $output);
+        self::assertStringContainsString('true', $output);
+        self::assertStringContainsString('["api.example.test"]', $output);
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+    }
+
+    private function runCommand(string $name): CommandTester
+    {
+        $app = new Application('nqphp');
+        $app->add(new \Nqphp\Core\Console\FeatureShowCommand(new Kernel($this->projectDir)));
+        $tester = new CommandTester($app->find('feature:show'));
+        $tester->execute(['name' => $name]);
+
+        return $tester;
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) {
+            return;
+        }
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($items as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+        rmdir($directory);
     }
 }
