@@ -276,6 +276,11 @@ final class Kernel implements HttpKernelInterface
         return $this->featureConfig->load()->get($feature, $key, $default);
     }
 
+    public function getProjectDir(): string
+    {
+        return $this->projectDir;
+    }
+
     /** Raw config map for a feature (test/debug helper). */
     public function featureConfig(): FeatureConfig
     {
