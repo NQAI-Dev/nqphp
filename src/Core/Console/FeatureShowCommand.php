@@ -12,12 +12,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand('feature:show', 'Show feature details')]
+#[AsCommand('feature:show', 'Show feature details: config, routes, middleware, commands')]
 final class FeatureShowCommand extends Command
 {
     public function __construct(private readonly Kernel $kernel)
     {
-        parent::__construct("feature:show");
+        parent::__construct('feature:show');
     }
 
     protected function configure(): void
@@ -29,31 +29,153 @@ final class FeatureShowCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $name = (string) $input->getArgument('name');
-        $features = $this->kernel->featureConfig()->load();
 
-        if (!\in_array($name, $features->features(), true)) {
+        // Validate: feature must have a discoverable config entry OR at least
+        // one discovered route/middleware/command belonging to it.
+        $featureConfig = $this->kernel->featureConfig()->load();
+        $knownFeatures = $featureConfig->features();
+
+        // Collect routes for this feature (route names starting with "<name>:" or
+        // controller classes containing "\Feature\<Name>\").
+        $routes = $this->collectRoutes($name);
+
+        // Collect middleware for this feature.
+        $middlewares = $this->collectMiddleware($name);
+
+        // Collect commands for this feature.
+        $commands = $this->collectCommands($name);
+
+        $hasConfig = \in_array($name, $knownFeatures, true);
+        $hasAny    = $hasConfig || $routes !== [] || $middlewares !== [] || $commands !== [];
+
+        if (!$hasAny) {
             $io->error("Feature '$name' not discovered.");
             return Command::FAILURE;
         }
 
         $io->title("Feature: $name");
-        $config = $features->all($name);
 
-        if ($config === []) {
-            $io->note('No configuration keys.');
-            return Command::SUCCESS;
-        }
-
-        ksort($config);
-        $rows = [];
-        foreach ($config as $key => $value) {
-            $rows[] = [(string) $key, $this->formatValue($value)];
-        }
-
+        // ── Configuration ──────────────────────────────────────────────────
         $io->section('Configuration');
-        $io->table(['KEY', 'VALUE'], $rows);
+        if (!$hasConfig) {
+            $io->note('No config.php found for this feature.');
+        } else {
+            $config = $featureConfig->all($name);
+            if ($config === []) {
+                $io->note('config.php present but empty.');
+            } else {
+                ksort($config);
+                $rows = [];
+                foreach ($config as $key => $value) {
+                    $rows[] = [(string) $key, $this->formatValue($value)];
+                }
+                $io->table(['KEY', 'VALUE'], $rows);
+            }
+        }
+
+        // ── Routes ─────────────────────────────────────────────────────────
+        $io->section('Routes');
+        if ($routes === []) {
+            $io->note('No routes discovered for this feature.');
+        } else {
+            $io->table(['NAME', 'PATH', 'METHODS'], $routes);
+        }
+
+        // ── Middleware ─────────────────────────────────────────────────────
+        $io->section('Middleware');
+        if ($middlewares === []) {
+            $io->note('No middleware discovered for this feature.');
+        } else {
+            $io->table(['NAME', 'ORDER', 'METHOD'], $middlewares);
+        }
+
+        // ── Commands ───────────────────────────────────────────────────────
+        $io->section('Commands');
+        if ($commands === []) {
+            $io->note('No commands discovered for this feature.');
+        } else {
+            $io->table(['NAME', 'DESCRIPTION'], $commands);
+        }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Collect routes whose controller class belongs to this feature namespace.
+     *
+     * @return list<array{string, string, string}>
+     */
+    private function collectRoutes(string $featureName): array
+    {
+        $collection = $this->kernel->getRouteCollection();
+        $rows = [];
+        foreach ($collection->all() as $routeName => $route) {
+            $controller = (string) ($route->getDefault('_controller') ?? '');
+            if (!$this->belongsToFeature($controller, $featureName)) {
+                continue;
+            }
+            $methods = $route->getMethods();
+            $rows[] = [
+                $routeName,
+                $route->getPath(),
+                $methods !== [] ? implode('|', $methods) : 'ANY',
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Collect middleware whose class belongs to this feature namespace.
+     *
+     * @return list<array{string, string, string}>
+     */
+    private function collectMiddleware(string $featureName): array
+    {
+        $all  = $this->kernel->middlewareDiscoverer()->discover()->all();
+        $rows = [];
+        foreach ($all as $descriptor) {
+            [$instance] = $descriptor['callable'];
+            if (!$this->belongsToFeature($instance::class, $featureName)) {
+                continue;
+            }
+            $rows[] = [
+                $descriptor['name'],
+                (string) $descriptor['order'],
+                $descriptor['callable'][1],
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Collect console commands whose class belongs to this feature namespace.
+     *
+     * @return list<array{string, string}>
+     */
+    private function collectCommands(string $featureName): array
+    {
+        $discoverer = new \Nqphp\Core\Console\CommandDiscoverer(
+            $this->kernel->commandDirs()
+        );
+        $rows = [];
+        foreach ($discoverer->discover() as $cmd) {
+            if (!$this->belongsToFeature($cmd::class, $featureName)) {
+                continue;
+            }
+            $rows[] = [
+                (string) $cmd->getName(),
+                $cmd->getDescription(),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * True when the given FQCN contains `\Feature\<FeatureName>\` (case-sensitive).
+     */
+    private function belongsToFeature(string $fqcn, string $featureName): bool
+    {
+        return str_contains($fqcn, '\\Feature\\' . $featureName . '\\');
     }
 
     private function formatValue(mixed $value): string

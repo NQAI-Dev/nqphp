@@ -20,7 +20,7 @@ namespace Nqphp\Core\Attribute;
  *   #[Service(name: 'cache:user')]
  *   final class UserCache { public function get(int $id): ?User { ... } }
  *
- *   #[Service(name: 'mailer', scope: 'prototype')]
+ *   #[Service(name: 'mailer', scope: 'prototype', tags: ['notifier'])]
  *   final class Mailer {
  *       public function __construct(public string $recipient) { ... }
  *   }
@@ -29,13 +29,15 @@ namespace Nqphp\Core\Attribute;
 final class Service
 {
     /**
-     * @param string $name  Unique service name (lowercase, namespace-prefixed).
-     * @param string $scope 'singleton' (default — one instance, reused)
-     *                       or 'prototype' (new instance each lookup).
+     * @param string   $name  Unique service name (lowercase, namespace-prefixed).
+     * @param string   $scope 'singleton' (default — one instance, reused)
+     *                        or 'prototype' (new instance each lookup).
+     * @param string[] $tags  Optional tags for grouping/filtering services.
      */
     public function __construct(
         public readonly string $name,
         public readonly string $scope = 'singleton',
+        public readonly array $tags = [],
     ) {
     }
 }

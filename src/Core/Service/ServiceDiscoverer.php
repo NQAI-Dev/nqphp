@@ -48,7 +48,7 @@ final class ServiceDiscoverer
     }
 
     /**
-     * @return array<string, array{class: class-string, scope: string}>
+     * @return array<string, array{class: class-string, scope: string, tags: string[]}>
      */
     public function all(): array
     {
@@ -61,7 +61,7 @@ final class ServiceDiscoverer
     }
 
     /**
-     * @return array{class: class-string, scope: string}|null
+     * @return array{class: class-string, scope: string, tags: string[]}|null
      */
     public function describe(string $name): ?array
     {
@@ -115,6 +115,7 @@ final class ServiceDiscoverer
         $this->services[$svc->name] = [
             'class' => $fqcn,
             'scope' => $svc->scope,
+            'tags'  => $svc->tags,
         ];
     }
 }

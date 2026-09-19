@@ -46,6 +46,9 @@ final class Kernel implements HttpKernelInterface
     /** @var string */
     private $projectDir;
 
+    /** @var string[] Directories scanned for commands (used by FeatureShowCommand). */
+    private array $commandDirs;
+
     /** @var \Nqphp\Core\Routing\Router */
     public $router;
 
@@ -97,6 +100,10 @@ final class Kernel implements HttpKernelInterface
         ?JsModuleServer $js = null,
     ) {
         $this->projectDir = $projectDir;
+        $this->commandDirs = [
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ];
         $this->router = new Router([
             $projectDir . '/src/Feature',
         ]);
@@ -154,6 +161,13 @@ final class Kernel implements HttpKernelInterface
     public function middlewareDiscoverer(): MiddlewareDiscoverer
     {
         return $this->middlewareDiscoverer;
+    }
+
+    /** Directories scanned for CLI commands — used by FeatureShowCommand
+     *  and any other introspection that needs to enumerate commands per feature. */
+    public function commandDirs(): array
+    {
+        return $this->commandDirs;
     }
 
     /** Look up a per-feature config value. Returns $default if the
