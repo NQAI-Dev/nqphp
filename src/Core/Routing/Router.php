@@ -98,11 +98,14 @@ final class Router
         $namePrefix = $ctrl->namePrefix ?? $this->prefixToName($prefix);
 
         foreach ($ref->getMethods() as $method) {
+            $routeIndex = 0;
             foreach ($method->getAttributes(RouteAttr::class) as $routeAttr) {
                 /** @var RouteAttr $route */
                 $route = $routeAttr->newInstance();
                 $path = $prefix . $route->path;
-                $name = ($namePrefix !== '' ? $namePrefix . ':' : '') . ($route->name ?? $method->getName());
+                $defaultName = $routeIndex === 0 ? $method->getName() : $method->getName() . '_' . $routeIndex;
+                $name = ($namePrefix !== '' ? $namePrefix . ':' : '') . ($route->name ?? $defaultName);
+                $routeIndex++;
 
                 $symRoute = new \Symfony\Component\Routing\Route(
                     $path,
