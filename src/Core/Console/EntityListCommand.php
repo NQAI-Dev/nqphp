@@ -23,8 +23,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'entity:list', description: 'List all #[Entity]-discovered domain entities.')]
 final class EntityListCommand extends Command
 {
-    public function __construct(private readonly Kernel $kernel)
-    {
+    public function __construct(
+        private readonly Kernel $kernel,
+        private readonly TableFormatter $tableFormatter = new TableFormatter(),
+    ) {
         parent::__construct();
     }
 
@@ -36,14 +38,14 @@ final class EntityListCommand extends Command
             $output->writeln('  <comment>(no entities — define one with #[Entity] under src/Feature/*/Entity/)</comment>');
             return self::SUCCESS;
         }
-        $maxName = 0;
+
+        $rows = [];
         foreach ($entities as $name => $class) {
-            $maxName = max($maxName, \strlen($name));
+            $rows[] = [$name, $class];
         }
-        $output->writeln(sprintf('  %-'.(int) $maxName.'s  %s', 'NAME', 'CLASS'));
-        foreach ($entities as $name => $class) {
-            $output->writeln(sprintf('  %-'.(int) $maxName.'s  %s', $name, $class));
-        }
+
+        $output->writeln($this->tableFormatter->format(['NAME', 'CLASS'], $rows));
+
         return self::SUCCESS;
     }
 }
