@@ -143,4 +143,20 @@ abstract class AbstractController
     {
         return $this->kernel->entityManager();
     }
+    /**
+     * Redirect to a named route by generating its URL from the kernel router.
+     *
+     * Usage:
+     *   return $this->redirectToRoute('blog:post:show', ['slug' => 'hello-world']);
+     *   return $this->redirectToRoute('admin:dashboard', status: 301);
+     */
+    protected function redirectToRoute(string $routeName, array $params = [], int $status = 302): RedirectResponse
+    {
+        if ($this->kernel === null) {
+            throw new \RuntimeException(
+                'Cannot generate URL outside a kernel dispatch: kernel reference is not set.'
+            );
+        }
+        return $this->redirect($this->kernel->url($routeName, $params), $status);
+    }
 }
