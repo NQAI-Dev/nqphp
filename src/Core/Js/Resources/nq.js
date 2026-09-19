@@ -53,33 +53,45 @@
   function applySwap(target, html, strategy) {
     if (!target) return;
     const s = (strategy || 'innerHTML').toLowerCase();
+    const parent = target.parentElement || document.body;
 
     switch (s) {
-      case 'outerhtml':
-        target.outerHTML = html;
-        break;
+      case 'outerhtml': {
+        const temp = document.createElement('template');
+        temp.innerHTML = html.trim();
+        const newNodes = Array.from(temp.content.childNodes);
+        target.replaceWith(...newNodes);
+        newNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            scan(node);
+          }
+        });
+        return;
+      }
       case 'beforebegin':
         target.insertAdjacentHTML('beforebegin', html);
+        scan(parent);
         break;
       case 'afterbegin':
         target.insertAdjacentHTML('afterbegin', html);
+        scan(target);
         break;
       case 'beforeend':
         target.insertAdjacentHTML('beforeend', html);
+        scan(target);
         break;
       case 'afterend':
         target.insertAdjacentHTML('afterend', html);
+        scan(parent);
         break;
       case 'none':
         break;
       case 'innerhtml':
       default:
         target.innerHTML = html;
+        scan(target);
         break;
     }
-
-    // Re-scan new DOM elements for nq declarative attributes
-    scan(target);
   }
 
   async function handleRequest(element, method, url) {
