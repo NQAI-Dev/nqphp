@@ -309,6 +309,13 @@ DBAL-style portability, swap the `EntityManager` wiring for
   per-feature `client.js` serving.
 * ✅ Middleware pipeline — `#[Middleware]` attribute + auto-discovery
   + Kernel runtime invocation + tests.
+* ✅ Event system integrated with the Kernel — `KernelRequestEvent`
+  (`kernel.request`) dispatched before CSRF / middleware / routing
+  (listener `setResponse()` short-circuits the pipeline) and
+  `KernelResponseEvent` (`kernel.response`) around every user-facing
+  response; `#[EventListener]` attribute + `EventListenerDiscoverer`
+  auto-subscribe listeners at boot (framework `/_nqphp/...` namespace
+  excluded).
 * ✅ `#[Schedule]` cron + Symfony Scheduler integration — discover +
   list + run via the real Symfony Scheduler evaluator.
 * ✅ `bin/console schedule:list` + `schedule:run` — proper

@@ -13,6 +13,10 @@ use Nqphp\Core\Entity\Driver\InMemoryDriver;
 use Nqphp\Core\Entity\Driver\SqliteDriver;
 use Nqphp\Core\Entity\EntityDiscoverer;
 use Nqphp\Core\Entity\EntityManager;
+use Nqphp\Core\Event\EventDispatcher;
+use Nqphp\Core\Event\EventListenerDiscoverer;
+use Nqphp\Core\Event\KernelRequestEvent;
+use Nqphp\Core\Event\KernelResponseEvent;
 use Nqphp\Core\Input\RequestData;
 use Nqphp\Core\Js\JsModuleServer;
 use Nqphp\Core\Middleware\MiddlewareDiscoverer;
@@ -91,6 +95,12 @@ final class Kernel implements HttpKernelInterface
     /** @var \Nqphp\Core\Config\ConfigStore */
     private readonly ConfigStore $configStore;
 
+    /** @var \Nqphp\Core\Event\EventDispatcher */
+    private readonly EventDispatcher $eventDispatcher;
+
+    /** @var \Nqphp\Core\Event\EventListenerDiscoverer */
+    private readonly EventListenerDiscoverer $eventListenerDiscoverer;
+
     private ?CsrfTokenManager $csrf;
     private ?JsModuleServer $js;
 
@@ -152,8 +162,31 @@ final class Kernel implements HttpKernelInterface
             $projectDir . '/src/Core',
         ]);
         $this->configStore = new ConfigStore($this->featureConfig);
+        // Event system: #[EventListener] methods across feature +
+        // core dirs are auto-subscribed at boot; the kernel then
+        // dispatches KernelRequestEvent / KernelResponseEvent around
+        // the request lifecycle.
+        $this->eventDispatcher = new EventDispatcher();
+        $this->eventListenerDiscoverer = new EventListenerDiscoverer([
+            $projectDir . '/src/Feature',
+            $projectDir . '/src/Core',
+        ]);
+        $this->eventListenerDiscoverer->attach($this->eventDispatcher);
         $this->csrf = $csrf;
         $this->js = $js;
+    }
+
+    /** EventDispatcher accessor — register runtime listeners before
+     *  handle() or introspect subscriptions in tests / console. */
+    public function events(): EventDispatcher
+    {
+        return $this->eventDispatcher;
+    }
+
+    /** EventListenerDiscoverer accessor for tests / introspection. */
+    public function eventListenerDiscoverer(): EventListenerDiscoverer
+    {
+        return $this->eventListenerDiscoverer;
     }
 
     /** Public accessor for tests + future introspection commands
@@ -316,9 +349,18 @@ final class Kernel implements HttpKernelInterface
             return new Response('Not Found', 404);
         }
 
+        // kernel.request — dispatched before CSRF, middleware and
+        // routing. A listener calling setResponse() short-circuits
+        // the whole pipeline below.
+        $requestEvent = new KernelRequestEvent($request);
+        $this->eventDispatcher->dispatch($requestEvent);
+        if ($requestEvent->hasResponse()) {
+            return $this->respond($request, $requestEvent->getResponse());
+        }
+
         // Enforce CSRF on state-changing user requests before dispatch.
         if ($this->csrf !== null && !$this->csrf->isValid($request)) {
-            return $this->withCsrfCookie(
+            return $this->respond(
                 $request,
                 new Response('CSRF token missing or invalid', 403, ['content-type' => 'text/plain']),
             );
@@ -334,7 +376,7 @@ final class Kernel implements HttpKernelInterface
             [$instance, $method] = $mw['callable'];
             $result = $instance->$method($request);
             if ($result instanceof Response) {
-                return $this->withCsrfCookie($request, $result);
+                return $this->respond($request, $result);
             }
             // null → continue to the next middleware.
         }
@@ -346,7 +388,7 @@ final class Kernel implements HttpKernelInterface
         try {
             $params = $matcher->match($request->getPathInfo());
         } catch (ResourceNotFoundException $e) {
-            return $this->withCsrfCookie($request, new Response('Not Found', 404));
+            return $this->respond($request, new Response('Not Found', 404));
         }
 
         // BeforeRoute hooks: invoked after route match, before
@@ -364,13 +406,13 @@ final class Kernel implements HttpKernelInterface
             [$cls, $method] = $hook['callable'];
             $result = $cls::$method($request);
             if ($result instanceof Response) {
-                return $this->withCsrfCookie($request, $result);
+                return $this->respond($request, $result);
             }
         }
 
         [$class, $method] = explode('::', $params['_controller'], 2);
         if (!class_exists($class)) {
-            return $this->withCsrfCookie($request, new Response(sprintf('Class %s not found', $class), 500));
+            return $this->respond($request, new Response(sprintf('Class %s not found', $class), 500));
         }
 
         // Controllers extending AbstractController need the Kernel
@@ -391,7 +433,7 @@ final class Kernel implements HttpKernelInterface
             }
         }
         if (!method_exists($instance, $method)) {
-            return $this->withCsrfCookie($request, new Response(sprintf('Method %s::%s not found', $class, $method), 500));
+            return $this->respond($request, new Response(sprintf('Method %s::%s not found', $class, $method), 500));
         }
 
         // Strip our private _controller / _method entries before invoking.
@@ -402,9 +444,21 @@ final class Kernel implements HttpKernelInterface
         $result = $reflection->invokeArgs($instance, $args);
 
         if ($result instanceof Response) {
-            return $this->withCsrfCookie($request, $result);
+            return $this->respond($request, $result);
         }
-        return $this->withCsrfCookie($request, new Response((string) ($result ?? ''), 200, ['content-type' => 'text/plain']));
+        return $this->respond($request, new Response((string) ($result ?? ''), 200, ['content-type' => 'text/plain']));
+    }
+
+    /**
+     * Dispatch kernel.response, then attach the CSRF cookie. Single
+     * exit point for every user-facing response the kernel returns.
+     */
+    private function respond(Request $request, Response $response): Response
+    {
+        $responseEvent = new KernelResponseEvent($request, $response);
+        $this->eventDispatcher->dispatch($responseEvent);
+
+        return $this->withCsrfCookie($request, $responseEvent->getResponse());
     }
 
     /**
