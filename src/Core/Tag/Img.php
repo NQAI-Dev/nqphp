@@ -13,6 +13,8 @@ namespace Nqphp\Core\Tag;
  */
 final class Img extends AbstractTag
 {
+    protected bool $selfClosing = true;
+
     /** Tag name is hard-coded to "img" — subclass never varies. */
     public function __construct(mixed ...$args)
     {

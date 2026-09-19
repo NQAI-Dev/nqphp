@@ -15,6 +15,8 @@ namespace Nqphp\Core\Tag;
  */
 final class Input extends AbstractTag
 {
+    protected bool $selfClosing = true;
+
     /** Tag name is hard-coded to "input" — subclass never varies. */
     public function __construct(mixed ...$args)
     {
