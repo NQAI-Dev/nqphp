@@ -159,4 +159,35 @@ abstract class AbstractController
         }
         return $this->redirect($this->kernel->url($routeName, $params), $status);
     }
+    /**
+     * Get the authenticated user from the security context, or null if anonymous.
+     */
+    protected function getUser(): ?\Nqphp\Core\Security\UserInterface
+    {
+        if ($this->kernel === null) {
+            throw new \RuntimeException('Cannot access user outside a kernel dispatch: kernel reference is not set.');
+        }
+        return $this->kernel->security()->getUser();
+    }
+
+    /**
+     * Check if the current user has the given role/permission.
+     */
+    protected function isGranted(string $role): bool
+    {
+        if ($this->kernel === null) {
+            throw new \RuntimeException('Cannot check permissions outside a kernel dispatch: kernel reference is not set.');
+        }
+        return $this->kernel->security()->isGranted($role);
+    }
+
+    /**
+     * Deny access unless the given role is granted, throwing 403 HttpException.
+     */
+    protected function denyAccessUnlessGranted(string $role, string $message = 'Access Denied.'): void
+    {
+        if (!$this->isGranted($role)) {
+            throw new \Nqphp\Core\Exception\HttpException(403, $message);
+        }
+    }
 }

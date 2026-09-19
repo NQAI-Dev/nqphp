@@ -112,6 +112,7 @@ final class Kernel implements HttpKernelInterface
 
     /** @var \Nqphp\Core\Session\SessionInterface */
     private readonly \Nqphp\Core\Session\SessionInterface $session;
+    private readonly \Nqphp\Core\Security\SecurityContextInterface $securityContext;
 
     /** @var \Nqphp\Core\Http\ErrorResponseFormatter */
     private readonly ErrorResponseFormatter $errorFormatter;
@@ -195,6 +196,7 @@ final class Kernel implements HttpKernelInterface
         // exposed to controllers/features via $this->kernel->cache().
         $this->cache = new Cache();
         $this->session = new \Nqphp\Core\Session\SessionManager();
+        $this->securityContext = new \Nqphp\Core\Security\SecurityContext($this->session);
         $this->errorFormatter = $errorFormatter
             ?? new ErrorResponseFormatter(debug: ($_SERVER['NQPHP_DEBUG'] ?? '') !== '');
         $this->csrf = $csrf;
@@ -233,6 +235,11 @@ final class Kernel implements HttpKernelInterface
     public function session(): \Nqphp\Core\Session\SessionInterface
     {
         return $this->session;
+    }
+
+    public function security(): \Nqphp\Core\Security\SecurityContextInterface
+    {
+        return $this->securityContext;
     }
 
     /** EventDispatcher accessor — register runtime listeners before
@@ -618,6 +625,10 @@ final class Kernel implements HttpKernelInterface
                 }
                 if (is_a($this->session, $typeName)) {
                     $args[] = $this->session;
+                    continue;
+                }
+                if (is_a($this->securityContext, $typeName)) {
+                    $args[] = $this->securityContext;
                     continue;
                 }
                 if (is_a($this->entityManager, $typeName)) {
