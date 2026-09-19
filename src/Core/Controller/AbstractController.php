@@ -232,4 +232,15 @@ abstract class AbstractController
     {
         return \Nqphp\Core\Http\FileResponse::inline($filePath, $fileName, $headers);
     }
+
+    /**
+     * Return an HTTP client instance for outgoing requests.
+     */
+    protected function http(array $defaultOptions = []): \Nqphp\Core\Http\Client\HttpClientInterface
+    {
+        if ($this->kernel === null) {
+            return new \Nqphp\Core\Http\Client\HttpClient($defaultOptions);
+        }
+        return $this->kernel->httpClient($defaultOptions);
+    }
 }

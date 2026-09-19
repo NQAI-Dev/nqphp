@@ -281,6 +281,14 @@ final class Kernel implements HttpKernelInterface
         return $this->projectDir;
     }
 
+    /**
+     * HTTP Client helper.
+     */
+    public function httpClient(array $defaultOptions = []): \Nqphp\Core\Http\Client\HttpClientInterface
+    {
+        return new \Nqphp\Core\Http\Client\HttpClient($defaultOptions);
+    }
+
     /** Raw config map for a feature (test/debug helper). */
     public function featureConfig(): FeatureConfig
     {
