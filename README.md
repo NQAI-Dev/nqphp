@@ -130,13 +130,20 @@ See `nqphp-template` for the full scaffolded `bin/console` and
 
 ```
 bin/console routes:list          List all auto-discovered HTTP routes.
-bin/console schedule:list       List all #[Schedule]-annotated tasks.
+bin/console schedule:list       List all #[Schedule]-annotated tasks with their next run time.
 bin/console schedule:run        Run schedules whose cron is due now.
 bin/console feature:list        Per-feature inventory: config + routes + middlewares.
 bin/console entity:list         List all #[Entity]-discovered domain entities.
 bin/console entity:show <name>  Show detailed info (#[Id] + #[Column]) for one entity.
 bin/console list                 Show Symfony Console's auto-generated help.
 ```
+
+`schedule:list` supports `--raw` (TSV output for scripts) and
+`--timezone=Europe/Berlin` (override the NEXT RUN wall-clock zone).
+`schedule:run` supports `--force` (fire every schedule regardless of
+cron), `--dry-run` (preview only), `--now=...` (override the
+reference time for tests / back-fills) and `--lock=PATH` (advisory
+flock so two cron workers cannot double-fire in the same minute).
 
 (`hello:greet` and any other feature commands are *not* shipped by
 the framework — they live in your app's `src/Feature/{Name}/Command/`
@@ -304,6 +311,12 @@ DBAL-style portability, swap the `EntityManager` wiring for
   + Kernel runtime invocation + tests.
 * ✅ `#[Schedule]` cron + Symfony Scheduler integration — discover +
   list + run via the real Symfony Scheduler evaluator.
+* ✅ `bin/console schedule:list` + `schedule:run` — proper
+  introspection table (NAME / CRON / NEXT RUN / DESCRIPTION) with
+  `--raw` / `--timezone` flags, plus a runner that evaluates
+  `Cron\CronExpression::isDue()` and invokes due callables, with
+  `--force` / `--dry-run` / `--now` / `--lock` flags and exit codes
+  distinguishing invalid-cron (2) from runtime errors (1).
 * ✅ Per-feature `config.php` autoloader — typed config reads +
   `Kernel::config(string $feature, string $key, $default)`.
 * ✅ `bin/console feature:list` — per-feature inventory.
