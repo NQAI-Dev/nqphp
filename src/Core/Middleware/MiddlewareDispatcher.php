@@ -6,7 +6,6 @@ namespace Nqphp\Core\Middleware;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use RuntimeException;
 
 class MiddlewareDispatcher
 {
@@ -14,7 +13,7 @@ class MiddlewareDispatcher
      * @var MiddlewareInterface[]
      */
     private array $middlewares = [];
-    
+
     /**
      * @var callable
      */
@@ -34,19 +33,19 @@ class MiddlewareDispatcher
     public function dispatch(Request $request): Response
     {
         $index = 0;
-        
+
         $next = function (Request $req) use (&$index, &$next): Response {
             if ($index < count($this->middlewares)) {
                 $middleware = $this->middlewares[$index];
                 $index++;
                 return $middleware->process($req, $next);
             }
-            
+
             // Core execution (controller logic) runs when no more middlewares
             $handler = $this->coreHandler;
             return $handler($req);
         };
-        
+
         return $next($request);
     }
 }

@@ -35,21 +35,21 @@ class Validator
         foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
             $field = $prop->getName();
             $value = $prop->isInitialized($obj) ? $prop->getValue($obj) : null;
-            
+
             foreach ($prop->getAttributes(\Nqphp\Core\Attribute\Assert::class) as $attr) {
                 $assert = $attr->newInstance();
                 $rule = $assert->rule;
                 if ($assert->options !== null) {
                     $rule .= ':' . $assert->options;
                 }
-                
+
                 if ($value === null || $value === '') {
                     if ($rule === 'required') {
                         $this->addError($field, "The {$field} field is required.");
                     }
                     continue;
                 }
-                
+
                 $this->applyRule($field, $value, $rule);
             }
         }
@@ -87,7 +87,7 @@ class Validator
             }
         } elseif ($rule === 'email') {
             if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                $this->addError($field, "Invalid email format");
+                $this->addError($field, 'Invalid email format');
             }
         } elseif ($rule === 'numeric') {
             if (!is_numeric($value)) {

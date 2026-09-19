@@ -29,7 +29,7 @@ final class EntityShowCommand extends Command
 {
     public function __construct(private readonly Kernel $kernel)
     {
-        parent::__construct("entity:show");
+        parent::__construct('entity:show');
     }
 
     protected function configure(): void

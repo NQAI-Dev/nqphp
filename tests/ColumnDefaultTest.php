@@ -34,7 +34,7 @@ final class ColumnDefaultTest extends TestCase
                    ->fetchColumn();
         self::assertStringContainsString("DEFAULT 'Anonymous'", $sql);
 
-        $pdo->exec("INSERT INTO user (id) VALUES (1)");
+        $pdo->exec('INSERT INTO user (id) VALUES (1)');
         $name = $pdo->query('SELECT name FROM user WHERE id=1')->fetchColumn();
         self::assertSame('Anonymous', $name);
     }

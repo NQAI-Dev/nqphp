@@ -23,7 +23,7 @@ class CsrfMiddlewareTest extends TestCase
     public function testSafeGetRequestPassesAndSetsCsrfCookie(): void
     {
         $request = Request::create('/safe-page', 'GET');
-        $response = $this->middleware->process($request, fn($req) => new Response('OK'));
+        $response = $this->middleware->process($request, fn ($req) => new Response('OK'));
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('OK', $response->getContent());
@@ -39,7 +39,7 @@ class CsrfMiddlewareTest extends TestCase
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('Invalid CSRF token.');
 
-        $this->middleware->process($request, fn($req) => new Response('OK'));
+        $this->middleware->process($request, fn ($req) => new Response('OK'));
     }
 
     public function testStateChangingPostWithValidHeaderPasses(): void
@@ -49,7 +49,7 @@ class CsrfMiddlewareTest extends TestCase
         $request->cookies->set(CsrfTokenManager::COOKIE_NAME, $token);
         $request->headers->set(CsrfTokenManager::HEADER_NAME, $token);
 
-        $response = $this->middleware->process($request, fn($req) => new Response('Submitted'));
+        $response = $this->middleware->process($request, fn ($req) => new Response('Submitted'));
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('Submitted', $response->getContent());

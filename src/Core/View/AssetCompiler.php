@@ -40,7 +40,7 @@ final class AssetCompiler
             foreach ($cssFiles as $file) {
                 $content = file_get_contents($file) ?: '';
                 $relPath = str_replace($this->projectDir . '/', '', $file);
-                
+
                 // Derive route or feature scope key
                 $parts = explode('/', $relPath);
                 $featureName = strtolower($parts[2] ?? 'common');
@@ -49,7 +49,7 @@ final class AssetCompiler
 
                 $scopeId = ScopedCssCompiler::generateScopeId($routeKey . ':' . $content);
                 $compiledCss = ScopedCssCompiler::compile($content, $scopeId);
-                
+
                 $hash = substr(md5($compiledCss), 0, 8);
                 $distFileName = sprintf('%s.%s.css', $routeKey, $hash);
                 file_put_contents($this->distDir . '/' . $distFileName, $compiledCss);
@@ -67,7 +67,7 @@ final class AssetCompiler
                 $hash = substr(md5($content), 0, 8);
                 $baseName = pathinfo($file, PATHINFO_FILENAME);
                 $distFileName = sprintf('%s.%s.js', $baseName, $hash);
-                
+
                 // Basic whitespace compression
                 $minifiedJs = $this->minifyJs($content);
                 file_put_contents($this->distDir . '/' . $distFileName, $minifiedJs);

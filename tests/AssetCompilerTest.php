@@ -39,7 +39,9 @@ final class AssetCompilerTest extends TestCase
 
     private function removeDir(string $dir): void
     {
-        if (!is_dir($dir)) return;
+        if (!is_dir($dir)) {
+            return;
+        }
         $files = array_diff(scandir($dir) ?: [], ['.', '..']);
         foreach ($files as $file) {
             $path = "$dir/$file";

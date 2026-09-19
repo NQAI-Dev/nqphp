@@ -27,7 +27,7 @@ final class HealthCheckCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $registry = new HealthCheckRegistry();
-        
+
         try {
             $pdo = $this->kernel->pdo();
             $registry->register(new DatabaseHealthCheck($pdo));

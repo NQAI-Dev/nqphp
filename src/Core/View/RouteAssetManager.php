@@ -45,7 +45,7 @@ class RouteAssetManager
     {
         $isPath = file_exists($sourceFileOrCss);
         $cssContent = $isPath ? (file_get_contents($sourceFileOrCss) ?: '') : $sourceFileOrCss;
-        
+
         $scopeId = ScopedCssCompiler::generateScopeId($routeKey . ':' . $cssContent);
 
         // Check if pre-built asset exists in manifest

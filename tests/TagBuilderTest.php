@@ -60,10 +60,10 @@ class TagBuilderTest extends TestCase
     public function testConditionalRenderingWhen(): void
     {
         $cardTrue = Tag::div(Tag::span('Always'))
-            ->when(true, fn($t) => $t->append(Tag::span('Admin Only')));
+            ->when(true, fn ($t) => $t->append(Tag::span('Admin Only')));
 
         $cardFalse = Tag::div(Tag::span('Always'))
-            ->when(false, fn($t) => $t->append(Tag::span('Admin Only')));
+            ->when(false, fn ($t) => $t->append(Tag::span('Admin Only')));
 
         $this->assertStringContainsString('Admin Only', (string) $cardTrue);
         $this->assertStringNotContainsString('Admin Only', (string) $cardFalse);

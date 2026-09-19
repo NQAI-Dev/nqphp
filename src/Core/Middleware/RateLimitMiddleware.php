@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Basic rate limiter using CacheInterface.
- * 
+ *
  * Limits requests per client IP within a rolling time window.
  * If the limit is exceeded, returns a 429 Too Many Requests response.
  */

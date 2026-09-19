@@ -14,23 +14,38 @@ use Symfony\Component\HttpFoundation\Response;
 class StubBlogController
 {
     #[Route('/blog', name: 'list', methods: ['GET'])]
-    public function list(): Response { return new Response(); }
+    public function list(): Response
+    {
+        return new Response();
+    }
 
     #[Route('/blog/{slug}', name: 'show', methods: ['GET'])]
-    public function show(string $slug): Response { return new Response(); }
+    public function show(string $slug): Response
+    {
+        return new Response();
+    }
 
     #[Route('/blog/{slug}', name: 'update', methods: ['PUT', 'PATCH'])]
-    public function update(string $slug): Response { return new Response(); }
+    public function update(string $slug): Response
+    {
+        return new Response();
+    }
 
     #[Route('/blog/{slug}', name: 'delete', methods: ['DELETE'])]
-    public function delete(string $slug): Response { return new Response(); }
+    public function delete(string $slug): Response
+    {
+        return new Response();
+    }
 }
 
 #[Controller('/api/v1')]
 class StubApiController
 {
     #[Route('/status', name: 'status', methods: ['GET'])]
-    public function status(): Response { return new Response(); }
+    public function status(): Response
+    {
+        return new Response();
+    }
 }
 
 class RouterTest extends TestCase

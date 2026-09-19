@@ -118,12 +118,12 @@ final class JsModuleServerTest extends TestCase
     }
     public function testServesNqDeclarativeJs(): void
     {
-        $server = new JsModuleServer([__DIR__ . "/../src/Core/Js/Resources"], []);
-        $response = $server->serve("nq.js");
+        $server = new JsModuleServer([__DIR__ . '/../src/Core/Js/Resources'], []);
+        $response = $server->serve('nq.js');
 
         $this->assertNotNull($response);
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertStringContainsString("data-nq-get", $response->getContent());
-        $this->assertStringContainsString("data-nq-target", $response->getContent());
+        $this->assertStringContainsString('data-nq-get', $response->getContent());
+        $this->assertStringContainsString('data-nq-target', $response->getContent());
     }
 }

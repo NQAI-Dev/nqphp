@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
+use Nqphp\Core\Exception\HttpException;
 use Nqphp\Core\Http\FileResponse;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
-use Nqphp\Core\Exception\HttpException;
 
 class FileResponseTest extends TestCase
 {
@@ -30,7 +29,7 @@ class FileResponseTest extends TestCase
     {
         $response = FileResponse::download($this->tempFile, 'custom.txt');
         $this->assertSame(200, $response->getStatusCode());
-        
+
         $disposition = $response->headers->get('content-disposition');
         $this->assertNotNull($disposition);
         $this->assertStringContainsString('attachment', $disposition);

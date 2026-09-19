@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Attribute\Column;
 use Nqphp\Core\Attribute\Entity;
-use Nqphp\Core\Attribute\Id;
 use Nqphp\Core\Entity\Driver\SqliteDriver;
 use Nqphp\Core\Entity\EntityDiscoverer;
 use Nqphp\Core\Entity\EntityManager;
@@ -67,13 +65,13 @@ PHP);
 
         // Verify the row landed in `app_legacy_users` (not `user`).
         // Schema is bootstrapped on first persist via ensureSchema().
-        $count = $pdo->query("SELECT COUNT(*) FROM `app_legacy_users`")->fetchColumn();
+        $count = $pdo->query('SELECT COUNT(*) FROM `app_legacy_users`')->fetchColumn();
         self::assertSame(1, $count);
 
         // The handle name (`user`) does NOT get a table — proves the
         // override actually redirected storage.
         try {
-            $pdo->query("SELECT COUNT(*) FROM `user`");
+            $pdo->query('SELECT COUNT(*) FROM `user`');
             self::fail('expected table `user` to not exist (override should have redirected)');
         } catch (\PDOException $e) {
             // sqlite "no such table" error — expected
@@ -128,7 +126,7 @@ PHP);
         $em->persist($i);
 
         // Default: table == name (no override → backward compat).
-        $count = $pdo->query("SELECT COUNT(*) FROM `item`")->fetchColumn();
+        $count = $pdo->query('SELECT COUNT(*) FROM `item`')->fetchColumn();
         self::assertSame(1, $count);
 
         unlink($src);

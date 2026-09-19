@@ -40,7 +40,7 @@ final class RateLimiterTest extends TestCase
         $middleware = new RateLimiterMiddleware($limiter, maxAttempts: 2, decaySeconds: 60);
 
         $request = Request::create('/api/test', 'GET', server: ['REMOTE_ADDR' => '192.168.1.50']);
-        $next = fn(Request $req): Response => new Response('ok', Response::HTTP_OK);
+        $next = fn (Request $req): Response => new Response('ok', Response::HTTP_OK);
 
         // First hit -> 200
         $response1 = $middleware->process($request, $next);

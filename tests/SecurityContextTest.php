@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Exception\HttpException;
 use Nqphp\Core\Kernel\Kernel;
 use Nqphp\Core\Security\SecurityContext;
 use Nqphp\Core\Security\SecurityContextInterface;
@@ -17,7 +16,8 @@ class DummyUser implements UserInterface
     public function __construct(
         private readonly string $username,
         private readonly array $roles = ['ROLE_USER']
-    ) {}
+    ) {
+    }
 
     public function getUserIdentifier(): string
     {

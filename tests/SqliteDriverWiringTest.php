@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Kernel\Kernel;
 use Nqphp\Core\Entity\Driver\DriverInterface;
-use Nqphp\Core\Entity\Driver\SqliteDriver;
 use Nqphp\Core\Entity\Driver\InMemoryDriver;
+use Nqphp\Core\Entity\Driver\SqliteDriver;
+use Nqphp\Core\Kernel\Kernel;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -29,7 +29,7 @@ final class EntityListCommandTest extends TestCase
         $cmdClass = new \ReflectionClass(\Nqphp\Core\Console\EntityListCommand::class);
         $cmd = clone $cmdClass->newInstanceWithoutConstructor();
         $cmd->__construct($kernel);
-        $cmd->setName("entity:list");
+        $cmd->setName('entity:list');
         $app->add($cmd);
 
         $tester = new CommandTester($app->find('entity:list'));

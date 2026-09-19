@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Attribute\Column;
 use Nqphp\Core\Attribute\Entity;
 use Nqphp\Core\Attribute\Id;
 use Nqphp\Core\Entity\EntityDiscoverer;

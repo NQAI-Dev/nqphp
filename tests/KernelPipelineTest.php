@@ -105,7 +105,7 @@ final class KernelPipelineTest extends TestCase
             },
         );
 
-        $pipe = new class implements MiddlewareInterface {
+        $pipe = new class () implements MiddlewareInterface {
             public array $seen = [];
 
             public function process(Request $request, callable $next): Response
@@ -125,7 +125,7 @@ final class KernelPipelineTest extends TestCase
 
     public function testPipeCanShortCircuitBeforeController(): void
     {
-        $this->kernel->pipe(new class implements MiddlewareInterface {
+        $this->kernel->pipe(new class () implements MiddlewareInterface {
             public function process(Request $request, callable $next): Response
             {
                 if ($request->getPathInfo() === '/_test/deny') {
@@ -226,7 +226,7 @@ final class KernelPipelineTest extends TestCase
 
     public function testThrowInsidePipeItselfIsCaughtByErrorBoundary(): void
     {
-        $this->kernel->pipe(new class implements MiddlewareInterface {
+        $this->kernel->pipe(new class () implements MiddlewareInterface {
             public function process(Request $request, callable $next): Response
             {
                 throw new \LogicException('pipe is broken');

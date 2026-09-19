@@ -14,7 +14,7 @@ namespace Nqphp\Core\Tag;
 final class A extends AbstractTag
 {
     /** Tag name is hard-coded to "a" — subclass never varies. */
-        public function __construct(mixed ...$args)
+    public function __construct(mixed ...$args)
     {
         $this->tag = 'a';
         parent::__construct(...$args);

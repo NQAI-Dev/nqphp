@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Kernel\Kernel;
-use Nqphp\Core\Console\EntityShowCommand;
 use Nqphp\Core\Console\EntityListCommand;
+use Nqphp\Core\Console\EntityShowCommand;
+use Nqphp\Core\Kernel\Kernel;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;

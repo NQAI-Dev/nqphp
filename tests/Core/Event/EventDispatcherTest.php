@@ -47,7 +47,7 @@ class EventDispatcherTest extends TestCase
         });
 
         $dispatcher->dispatch($event);
-        
+
         $this->assertSame(0, $event->counter);
     }
 

@@ -16,7 +16,7 @@ namespace Nqphp\Core\Tag;
 final class Input extends AbstractTag
 {
     /** Tag name is hard-coded to "input" — subclass never varies. */
-        public function __construct(mixed ...$args)
+    public function __construct(mixed ...$args)
     {
         $this->tag = 'input';
         parent::__construct(...$args);

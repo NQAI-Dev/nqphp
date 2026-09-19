@@ -154,7 +154,7 @@ PHP
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
-        $tagsLiteral = '[' . implode(', ', array_map(fn(string $t) => "'$t'", $tags)) . ']';
+        $tagsLiteral = '[' . implode(', ', array_map(fn (string $t) => "'$t'", $tags)) . ']';
         $ns = 'Nqphp\\CommandFixture\\' . $feature;
         $php = <<<PHP
 <?php

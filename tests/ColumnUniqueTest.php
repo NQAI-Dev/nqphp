@@ -6,10 +6,9 @@ namespace Nqphp\Tests;
 
 use Nqphp\Core\Attribute\Column;
 use Nqphp\Core\Attribute\Entity;
-use Nqphp\Core\Attribute\Id;
 use Nqphp\Core\Entity\Driver\SqliteDriver;
-use PHPUnit\Framework\TestCase;
 use PDOException;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Phase 2 #10 extension: #[Column(unique: true)] translates to
@@ -44,7 +43,7 @@ final class ColumnUniqueTest extends TestCase
 
         // First insert OK
         $pdo->exec("INSERT INTO user (email, name) VALUES ('alice@x.com', 'Alice')");
-        self::assertSame(1, $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn());
+        self::assertSame(1, $pdo->query('SELECT COUNT(*) FROM user')->fetchColumn());
 
         // Duplicate email blocked by UNIQUE constraint
         $this->expectException(PDOException::class);
@@ -68,7 +67,7 @@ final class ColumnUniqueTest extends TestCase
 
         $pdo->exec("INSERT INTO post (title) VALUES ('hello')");
         $pdo->exec("INSERT INTO post (title) VALUES ('hello')");  // dup OK без unique
-        self::assertSame(2, $pdo->query("SELECT COUNT(*) FROM post")->fetchColumn());
+        self::assertSame(2, $pdo->query('SELECT COUNT(*) FROM post')->fetchColumn());
     }
 
     public function testMultipleUniqueColumnsInOneTable(): void
@@ -112,6 +111,6 @@ final class ColumnUniqueTest extends TestCase
 
         // Different username + email OK
         $pdo->exec("INSERT INTO account (username, email) VALUES ('bob', 'b@x.com')");
-        self::assertSame(2, $pdo->query("SELECT COUNT(*) FROM account")->fetchColumn());
+        self::assertSame(2, $pdo->query('SELECT COUNT(*) FROM account')->fetchColumn());
     }
 }

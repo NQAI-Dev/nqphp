@@ -21,7 +21,7 @@ final class InMemoryRateLimiter implements RateLimiterInterface
         }
 
         // Filter out expired hits
-        $this->hits[$key] = array_values(array_filter($this->hits[$key], fn(int $ts) => $ts > $cutoff));
+        $this->hits[$key] = array_values(array_filter($this->hits[$key], fn (int $ts) => $ts > $cutoff));
 
         $count = count($this->hits[$key]);
 

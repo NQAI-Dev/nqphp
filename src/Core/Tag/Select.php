@@ -21,7 +21,7 @@ namespace Nqphp\Core\Tag;
 final class Select extends AbstractTag
 {
     /** Tag name is hard-coded to "select" — subclass never varies. */
-        public function __construct(mixed ...$args)
+    public function __construct(mixed ...$args)
     {
         $this->tag = 'select';
         parent::__construct(...$args);

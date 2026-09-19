@@ -6,7 +6,6 @@ namespace Nqphp\Tests;
 
 use Nqphp\Core\I18n\Translator;
 use Nqphp\Core\Middleware\LocaleMiddleware;
-use Nqphp\Core\Middleware\RequestHandlerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

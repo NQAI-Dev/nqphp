@@ -30,7 +30,7 @@ class ViewRenderer
         }
 
         // Isolate scope
-        $renderFunc = static function(string $__view_path, array $__view_data): string {
+        $renderFunc = static function (string $__view_path, array $__view_data): string {
             extract($__view_data, EXTR_SKIP);
             ob_start();
             try {

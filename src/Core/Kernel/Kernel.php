@@ -21,7 +21,6 @@ use Nqphp\Core\Event\KernelResponseEvent;
 use Nqphp\Core\Http\ErrorResponseFormatter;
 use Nqphp\Core\Input\RequestData;
 use Nqphp\Core\Js\JsModuleServer;
-use Nqphp\Core\Middleware\ErrorHandlerMiddleware;
 use Nqphp\Core\Middleware\MiddlewareDiscoverer;
 use Nqphp\Core\Middleware\MiddlewareDispatcher;
 use Nqphp\Core\Middleware\MiddlewareInterface;
@@ -35,10 +34,10 @@ use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Throwable;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
+use Throwable;
 
 /**
  * Minimal HTTP kernel.

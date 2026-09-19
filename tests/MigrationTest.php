@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
-use Nqphp\Core\Migration\AbstractMigration;
 use Nqphp\Core\Migration\MigrationRepository;
 use Nqphp\Core\Migration\Migrator;
 use PDO;
