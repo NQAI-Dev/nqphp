@@ -292,4 +292,19 @@ final class ValidatorExtendedTest extends TestCase
         $this->assertArrayHasKey('ip', $e);
         $this->assertSame('The ip field must be a valid IP address.', $e['ip'][0]);
     }
+
+    // ─── mac ──────────────────────────────────────────────────────────────────
+
+    public function testMacValid(): void
+    {
+        $e = $this->v()->validate(['mac' => '00:1A:2B:3C:4D:5E'], ['mac' => 'mac']);
+        $this->assertSame([], $e);
+    }
+
+    public function testMacInvalid(): void
+    {
+        $e = $this->v()->validate(['mac' => 'invalid-mac-address'], ['mac' => 'mac']);
+        $this->assertArrayHasKey('mac', $e);
+        $this->assertSame('The mac field must be a valid MAC address.', $e['mac'][0]);
+    }
 }

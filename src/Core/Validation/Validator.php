@@ -179,6 +179,7 @@ class Validator
             'uuid'        => $this->ruleUuid($field, $value),
             'json'        => $this->ruleJson($field, $value),
             'ip'          => $this->ruleIp($field, $value),
+            'mac'         => $this->ruleMac($field, $value),
             default       => null,   // unknown rule — silently skip
         };
     }
@@ -364,6 +365,13 @@ class Validator
     {
         if (!is_string($value) || filter_var($value, FILTER_VALIDATE_IP) === false) {
             $this->addError($field, "The {$field} field must be a valid IP address.");
+        }
+    }
+
+    private function ruleMac(string $field, mixed $value): void
+    {
+        if (!is_string($value) || filter_var($value, FILTER_VALIDATE_MAC) === false) {
+            $this->addError($field, "The {$field} field must be a valid MAC address.");
         }
     }
 
