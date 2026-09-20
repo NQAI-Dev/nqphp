@@ -69,4 +69,28 @@ class ArraySessionTest extends TestCase
         $this->assertSame(['Profile updated', 'Email sent'], $this->session->getFlash('success'));
         $this->assertFalse($this->session->hasFlash('success'));
     }
+
+    public function testRegeneratePreservesDataByDefault(): void
+    {
+        $this->session->set('user', 'alex');
+        $result = $this->session->regenerate(false);
+
+        $this->assertTrue($result);
+        $this->assertTrue($this->session->isStarted());
+        $this->assertSame('alex', $this->session->get('user'));
+    }
+
+    public function testRegenerateDestroysOldSessionDataWhenRequested(): void
+    {
+        $this->session->set('user', 'alex');
+        $this->session->addFlash('info', 'hi');
+
+        $result = $this->session->regenerate(true);
+
+        $this->assertTrue($result);
+        $this->assertTrue($this->session->isStarted());
+        $this->assertFalse($this->session->has('user'));
+        $this->assertSame([], $this->session->all());
+        $this->assertFalse($this->session->hasFlash('info'));
+    }
 }

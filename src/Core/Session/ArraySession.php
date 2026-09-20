@@ -84,6 +84,20 @@ class ArraySession implements SessionInterface
         return !empty($this->flashes[$key]);
     }
 
+    public function regenerate(bool $destroyOldSession = false): bool
+    {
+        if (!$this->isStarted()) {
+            $this->start();
+        }
+
+        if ($destroyOldSession) {
+            $this->data = [];
+            $this->flashes = [];
+        }
+
+        return true;
+    }
+
     /**
      * Return all session data (useful for inspection in tests).
      *

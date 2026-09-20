@@ -41,4 +41,12 @@ interface SessionInterface
      * Check if flash messages exist for the given key.
      */
     public function hasFlash(string $key): bool;
+
+    /**
+     * Regenerates the session ID.
+     *
+     * @param bool $destroyOldSession Whether to delete the old associated session data.
+     * @return bool True on success, false on failure.
+     */
+    public function regenerate(bool $destroyOldSession = false): bool;
 }

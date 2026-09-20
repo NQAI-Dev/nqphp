@@ -98,4 +98,17 @@ class SessionManager implements SessionInterface
         $this->start();
         return !empty($_SESSION['_flash'][$key]);
     }
+
+    public function regenerate(bool $destroyOldSession = false): bool
+    {
+        if (!$this->isStarted()) {
+            $this->start();
+        }
+
+        if (headers_sent()) {
+            return false;
+        }
+
+        return session_regenerate_id($destroyOldSession);
+    }
 }
