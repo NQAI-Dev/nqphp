@@ -16,6 +16,7 @@ use Nqphp\Core\Entity\EntityDiscoverer;
 use Nqphp\Core\Entity\EntityManager;
 use Nqphp\Core\Event\EventDispatcher;
 use Nqphp\Core\Event\EventListenerDiscoverer;
+use Nqphp\Core\Event\KernelExceptionEvent;
 use Nqphp\Core\Event\KernelRequestEvent;
 use Nqphp\Core\Event\KernelResponseEvent;
 use Nqphp\Core\Http\ErrorResponseFormatter;
@@ -421,6 +422,15 @@ final class Kernel implements HttpKernelInterface
             if (!$catch) {
                 throw $exception;
             }
+
+            // kernel.exception — allows listeners to handle/convert uncaught
+            // exceptions into custom responses before fallback formatting.
+            $exceptionEvent = new KernelExceptionEvent($request, $exception);
+            $this->eventDispatcher->dispatch($exceptionEvent);
+            if ($exceptionEvent->hasResponse()) {
+                return $this->withCsrfCookie($request, $exceptionEvent->getResponse());
+            }
+
             // Top-level error boundary: any Throwable escaping the
             // pipeline is converted to a safe, content-negotiated
             // response. kernel.response is intentionally skipped —
