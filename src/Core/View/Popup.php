@@ -8,7 +8,7 @@ use Nqphp\Core\Tag\AbstractTag;
 
 /**
  * Built-in Popover / Popup notification & tooltip component with scoped CSS,
- * anchor positioning, autohide, and nq.js integration.
+ * anchor positioning, close controls, and nq.js integration.
  */
 class Popup extends ScopedView
 {
@@ -16,17 +16,20 @@ class Popup extends ScopedView
     private string $content;
     private string $placement;
     private ?string $triggerId;
+    private bool $dismissible;
 
     public function __construct(
         string $id,
         string|AbstractTag $content,
         string $placement = 'bottom',
-        ?string $triggerId = null
+        ?string $triggerId = null,
+        bool $dismissible = true
     ) {
         $this->id = htmlspecialchars($id, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $this->content = $content instanceof AbstractTag ? $content->toHtml() : (string)$content;
         $this->placement = in_array($placement, ['top', 'bottom', 'left', 'right'], true) ? $placement : 'bottom';
         $this->triggerId = $triggerId !== null ? htmlspecialchars($triggerId, ENT_QUOTES | ENT_HTML5, 'UTF-8') : null;
+        $this->dismissible = $dismissible;
 
         $html = $this->buildMarkup();
         $css = $this->buildStyles();
@@ -38,9 +41,10 @@ class Popup extends ScopedView
         string $id,
         string|AbstractTag $content,
         string $placement = 'bottom',
-        ?string $triggerId = null
+        ?string $triggerId = null,
+        bool $dismissible = true
     ): static {
-        return new static($id, $content, $placement, $triggerId);
+        return new static($id, $content, $placement, $triggerId, $dismissible);
     }
 
     public function getId(): string
@@ -51,14 +55,39 @@ class Popup extends ScopedView
     private function buildMarkup(): string
     {
         $triggerAttr = $this->triggerId !== null ? sprintf('data-anchor="%s"', $this->triggerId) : '';
+        $closeButton = $this->dismissible
+            ? sprintf('<button type="button" class="nq-popup-close" onclick="document.getElementById(\'%s\').remove()" aria-label="Close">&times;</button>', $this->id)
+            : '';
+
+        $dismissAttr = $this->dismissible ? 'data-nq-dismissible="true"' : '';
 
         return <<<HTML
-<div id="{$this->id}" class="nq-popup nq-popup-{$this->placement}" {$triggerAttr} role="tooltip">
+<div id="{$this->id}" class="nq-popup nq-popup-{$this->placement}" {$triggerAttr} {$dismissAttr} role="tooltip">
     <div class="nq-popup-arrow"></div>
     <div class="nq-popup-inner">
-        {$this->content}
+        <div class="nq-popup-content">{$this->content}</div>
+        {$closeButton}
     </div>
 </div>
+<script>
+(function() {
+    var p = document.getElementById('{$this->id}');
+    if (!p) return;
+    function onDocClick(e) {
+        if (!p.isConnected) {
+            document.removeEventListener('click', onDocClick);
+            return;
+        }
+        if (!p.contains(e.target)) {
+            p.remove();
+            document.removeEventListener('click', onDocClick);
+        }
+    }
+    setTimeout(function() {
+        document.addEventListener('click', onDocClick);
+    }, 50);
+})();
+</script>
 HTML;
     }
 
@@ -78,9 +107,31 @@ HTML;
     animation: nq-popup-pop 0.15s ease-out;
 }
 .nq-popup-inner {
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     position: relative;
     z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.nq-popup-content {
+    flex: 1;
+}
+.nq-popup-close {
+    background: transparent;
+    border: none;
+    color: #a6adc8;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    margin: -0.2rem -0.2rem 0 0;
+}
+.nq-popup-close:hover {
+    color: #f38ba8;
+    background: rgba(243, 139, 168, 0.1);
 }
 .nq-popup-arrow {
     position: absolute;
