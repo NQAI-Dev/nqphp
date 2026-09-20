@@ -53,7 +53,9 @@ class ModalAndPopupTest extends TestCase
             id: 'user-tooltip',
             content: Tag::span([], 'Online now'),
             placement: 'top',
-            triggerId: 'btn-user-status'
+            triggerId: 'btn-user-status',
+            dismissible: true,
+            title: 'User Info'
         );
 
         $this->assertSame('user-tooltip', $popup->getId());
@@ -62,8 +64,27 @@ class ModalAndPopupTest extends TestCase
         $this->assertStringContainsString('id="user-tooltip"', $html);
         $this->assertStringContainsString('class="nq-popup nq-popup-top"', $html);
         $this->assertStringContainsString('data-anchor="btn-user-status"', $html);
+        $this->assertStringContainsString('User Info', $html);
+        $this->assertStringContainsString('class="nq-popup-close"', $html);
         $this->assertStringContainsString('Online now', $html);
         $this->assertStringContainsString('<style data-nq-scope-style="nq-popup-user-tooltip">', $html);
         $this->assertStringContainsString('.nq-popup-arrow', $html);
+        $this->assertStringContainsString('.nq-popup-header', $html);
+    }
+
+    public function testPopupNonDismissibleWithoutTitle(): void
+    {
+        $popup = Popup::make(
+            id: 'plain-tooltip',
+            content: 'Simple note',
+            placement: 'bottom',
+            dismissible: false
+        );
+
+        $html = $popup->toHtml();
+
+        $this->assertStringNotContainsString('class="nq-popup-close"', $html);
+        $this->assertStringNotContainsString('class="nq-popup-header"', $html);
+        $this->assertStringContainsString('Simple note', $html);
     }
 }
