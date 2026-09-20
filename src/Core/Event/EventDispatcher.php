@@ -109,6 +109,16 @@ class EventDispatcher
     }
 
     /**
+     * Return all registered event classes with listeners.
+     *
+     * @return list<string>
+     */
+    public function getRegisteredEvents(): array
+    {
+        return array_keys($this->listeners);
+    }
+
+    /**
      * Normalize EventSubscriberInterface::getSubscribedEvents() to
      * a flat list of [ eventClass, method, priority ] tuples.
      *
