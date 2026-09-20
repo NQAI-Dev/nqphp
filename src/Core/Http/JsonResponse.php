@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Http;
 
+use Nqphp\Core\Entity\Paginator;
 use Symfony\Component\HttpFoundation\JsonResponse as SymfonyJsonResponse;
 
 /**
@@ -28,6 +29,35 @@ class JsonResponse extends SymfonyJsonResponse
         $payload = [
             'success' => true,
             'data' => $data,
+        ];
+
+        if ($message !== null) {
+            $payload['message'] = $message;
+        }
+
+        return new self($payload, $status, $headers);
+    }
+
+    /**
+     * Create a paginated JSON response from a Paginator instance or array payload.
+     *
+     * @param Paginator|array $paginator
+     * @param string|null $message Optional status message
+     * @param int $status HTTP status code (default 200)
+     * @param array<string, string> $headers Additional headers
+     */
+    public static function paginated(
+        Paginator|array $paginator,
+        ?string $message = null,
+        int $status = 200,
+        array $headers = []
+    ): self {
+        $paginatedData = $paginator instanceof Paginator ? $paginator->toArray() : $paginator;
+
+        $payload = [
+            'success' => true,
+            'data' => $paginatedData['items'] ?? [],
+            'meta' => $paginatedData['meta'] ?? [],
         ];
 
         if ($message !== null) {
