@@ -23,7 +23,7 @@ use Symfony\Component\Finder\Finder;
  * on the same Kernel — schedule discovery is a read-only metadata
  * pass at boot time.
  */
-final class ScheduleDiscoverer
+final class ScheduleDiscoverer implements ScheduleDiscovererInterface
 {
     /** @var string[] Directories scanned for scheduler classes. */
     private array $schedulerDirs;

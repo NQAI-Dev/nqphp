@@ -41,7 +41,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class ScheduleListCommand extends Command
 {
-    public function __construct(private readonly ScheduleDiscoverer $discoverer)
+    public function __construct(private readonly ScheduleDiscovererInterface $discoverer)
     {
         parent::__construct();
     }

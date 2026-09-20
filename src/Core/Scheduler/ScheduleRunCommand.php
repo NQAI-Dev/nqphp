@@ -46,7 +46,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class ScheduleRunCommand extends Command
 {
-    public function __construct(private readonly ScheduleDiscoverer $discoverer)
+    public function __construct(private readonly ScheduleDiscovererInterface $discoverer)
     {
         parent::__construct();
     }
@@ -127,8 +127,13 @@ final class ScheduleRunCommand extends Command
             }
 
             try {
-                [$class, $method] = $schedule['callable'];
-                $class::$method();
+                $callable = $schedule['callable'];
+                if (is_array($callable) && count($callable) === 2 && is_string($callable[0]) && is_string($callable[1])) {
+                    [$class, $method] = $callable;
+                    $class::$method();
+                } else {
+                    $callable();
+                }
                 $ran++;
             } catch (\Throwable $e) {
                 $errors[] = sprintf('  - %s: %s', $name, $e->getMessage());
