@@ -107,4 +107,17 @@ final class RouteCollector
     {
         return $this->routes;
     }
+
+    /**
+     * Register standard RESTful resource routes.
+     *
+     * @param string $name Resource name (e.g. 'posts')
+     * @param string $controller Controller class name
+     * @param array{only?: list<string>, except?: list<string>, id_pattern?: string} $options
+     */
+    public function resource(string $name, string $controller, array $options = []): self
+    {
+        ResourceRouteBuilder::register($this, $name, $controller, $options);
+        return $this;
+    }
 }
