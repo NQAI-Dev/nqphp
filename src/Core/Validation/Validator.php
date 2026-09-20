@@ -42,16 +42,27 @@ class Validator
     }
 
     /**
-     * Register a custom validation rule.
+     * Register a custom validation rule via callable or RuleInterface object.
      *
      * The callable receives ($value, $field) and must return null on pass
      * or an error message string on failure.
      *
-     * @param callable(mixed, string): string|null $handler
+     * @param string|RuleInterface $nameOrRule
+     * @param (callable(mixed, string): string|null)|null $handler
      */
-    public function addRule(string $name, callable $handler): static
+    public function addRule(string|RuleInterface $nameOrRule, ?callable $handler = null): static
     {
-        $this->customRules[$name] = $handler;
+        if ($nameOrRule instanceof RuleInterface) {
+            $this->customRules[$nameOrRule::class] = static function (mixed $value, string $field) use ($nameOrRule): ?string {
+                return $nameOrRule->passes($value, $field) ? null : $nameOrRule->message($field);
+            };
+            return $this;
+        }
+
+        if ($handler !== null) {
+            $this->customRules[$nameOrRule] = $handler;
+        }
+
         return $this;
     }
 
@@ -134,19 +145,30 @@ class Validator
 
     private function validateArray(array $data, array $rules): void
     {
-        foreach ($rules as $field => $ruleString) {
-            $ruleSet = explode('|', $ruleString);
+        foreach ($rules as $field => $ruleDefinitions) {
+            $ruleSet = is_array($ruleDefinitions) ? $ruleDefinitions : explode('|', (string) $ruleDefinitions);
             $value   = $data[$field] ?? null;
 
             foreach ($ruleSet as $rule) {
-                if ($value === null || $value === '') {
-                    if ($rule === 'required') {
-                        $this->addError($field, "The {$field} field is required.");
+                if ($rule instanceof RuleInterface) {
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+                    if (!$rule->passes($value, (string) $field)) {
+                        $this->addError((string) $field, $rule->message((string) $field));
                     }
                     continue;
                 }
 
-                $this->applyRule($field, $value, $rule, $data);
+                $ruleStr = (string) $rule;
+                if ($value === null || $value === '') {
+                    if ($ruleStr === 'required') {
+                        $this->addError((string) $field, "The {$field} field is required.");
+                    }
+                    continue;
+                }
+
+                $this->applyRule((string) $field, $value, $ruleStr, $data);
             }
         }
     }
