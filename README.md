@@ -31,6 +31,16 @@ What ships in this repo:
 * `src/Core/Entity/` — custom ORM (`#[Id]` / `#[Column]` / `#[Where]`,
   `EntityManager`, pluggable `DriverInterface` with `InMemoryDriver`
   + `SqliteDriver` PDO-backed)
+* `src/Core/View/` — View engine (`ViewRenderer`, `TemplateEngine`),
+  scoped CSS compilation (`ScopedCss`, `ScopedCssCompiler`),
+  `RouteAssetManager` (manifest integration & HTTP headers for `nq.js`)
+* `src/Core/Migration/` — database migrations engine (`Migrator`,
+  `MigrationRepository`, `AbstractMigration`)
+* `src/Core/Queue/` — lightweight background queue (`DatabaseQueue`,
+  `Worker`, `JobInterface`)
+* `src/Core/Cache/` — cache stores and PSR-compatible interfaces
+* `src/Core/Validation/` — input validation attributes and validator
+* `src/Core/I18n/` — translation and localization engine
 
 ## Architecture decisions
 
@@ -128,14 +138,39 @@ See `nqphp-template` for the full scaffolded `bin/console` and
 
 ## Available CLI commands (built-in)
 
+### Introspection & Inspection
 ```
 bin/console routes:list          List all auto-discovered HTTP routes.
 bin/console schedule:list       List all #[Schedule]-annotated tasks with their next run time.
 bin/console schedule:run        Run schedules whose cron is due now.
 bin/console feature:list        Per-feature inventory: config + routes + middlewares.
+bin/console feature:show <name> Show detailed feature config, routes, middleware, commands.
 bin/console entity:list         List all #[Entity]-discovered domain entities.
 bin/console entity:show <name>  Show detailed info (#[Id] + #[Column]) for one entity.
-bin/console list                 Show Symfony Console's auto-generated help.
+bin/console service:list        List all discovered container services.
+bin/console system:health       Run system and environment health checks.
+bin/console list                Show Symfony Console's auto-generated help.
+```
+
+### Code Generators (Vertical Slice Scaffolding)
+```
+bin/console make:feature <name>             Scaffold full vertical feature module (Controller, Service, Entity, View).
+bin/console make:controller <feature> <name> Create a new Controller in a feature module.
+bin/console make:entity <feature> <name>     Create a new #[Entity] with table mapping.
+bin/console make:migration <name>            Create a new timestamped database migration.
+```
+
+### Database & Migrations
+```
+bin/console migrate              Run all pending database migrations in transaction.
+bin/console migrate:rollback     Rollback the last executed database migration batch.
+```
+
+### Background Workers, Caching & Assets
+```
+bin/console queue:work           Process queue jobs (supports --once and --sleep=<seconds>).
+bin/console cache:clear          Clear application and framework cache stores (alias: cc).
+bin/console assets:build         Compile and bundle scoped CSS/JS with manifest generation.
 ```
 
 `schedule:list` supports `--raw` (TSV output for scripts) and
@@ -357,6 +392,24 @@ DBAL-style portability, swap the `EntityManager` wiring for
   `#[Id]`, throws on never-persisted entities. Mirrors `persist()`
   symmetry; cascade is opt-in via explicit calls (callers control
   what gets removed when a parent goes away).
+* ✅ View Engine & Scoped CSS — нативный движок представлений
+  `ViewRenderer`, `TemplateEngine`, компиляция скоупированного CSS
+  через `ScopedCss` (современный `@scope`) и `ScopedCssCompiler`
+  (дедупликация и изоляция селекторов), `RouteAssetManager`
+  (связка с manifest.json и заголовками `X-NQ-CSS`/`X-NQ-JS` для
+  динамического свапа фрагментов в `nq.js`).
+* ✅ Database Migrations — движок миграций `Migrator`, репозиторий
+  истории `MigrationRepository` в транзакциях, базовый класс
+  `AbstractMigration`, CLI-команды `make:migration`, `migrate`,
+  `migrate:rollback`.
+* ✅ Background Queue & Worker — очередь на БД `DatabaseQueue`,
+  воркер `Worker`, интерфейс задач `JobInterface` с ретраями,
+  CLI-команда `queue:work`.
+* ✅ Vertical Slice Generators — CLI-скаффолдеры архитектуры фич:
+  `make:feature`, `make:controller`, `make:entity`.
+* ✅ Caching & Assets CLI — `cache:clear` (очистка сторов),
+  `assets:build` (сборка scoped стилей/скриптов с генерацией манифеста),
+  `system:health` (проверка окружения и здоровья системы).
 
 Open Phase 2 follow-ups (not yet shipped, lower priority):
 
