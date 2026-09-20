@@ -12,7 +12,7 @@ namespace Nqphp\Core\Event;
  *  - Subscriber registration via addSubscriber()
  *  - Listener priority ordering (higher int = runs first)
  */
-class EventDispatcher
+class EventDispatcher implements EventDispatcherInterface
 {
     /**
      * @var array<string, array<array{callable, int}>>
