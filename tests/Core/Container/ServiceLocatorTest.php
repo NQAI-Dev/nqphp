@@ -202,4 +202,32 @@ final class ServiceLocatorTest extends TestCase
 
         $this->assertSame($a, $b);
     }
+
+    public function testPsr11GetReturnsService(): void
+    {
+        $loc = new ServiceLocator();
+        $svc = $loc->get(NoDepsService::class);
+
+        $this->assertInstanceOf(NoDepsService::class, $svc);
+    }
+
+    public function testPsr11GetThrowsNotFoundExceptionOnUnknownId(): void
+    {
+        $loc = new ServiceLocator();
+
+        $this->expectException(\Nqphp\Core\Container\NotFoundException::class);
+        $this->expectException(\Psr\Container\NotFoundExceptionInterface::class);
+
+        $loc->get('NonExistentServiceClass');
+    }
+
+    public function testPsr11GetThrowsContainerExceptionOnResolutionFailure(): void
+    {
+        $loc = new ServiceLocator();
+
+        $this->expectException(\Nqphp\Core\Container\ContainerException::class);
+        $this->expectException(\Psr\Container\ContainerExceptionInterface::class);
+
+        $loc->get(CircularA::class);
+    }
 }

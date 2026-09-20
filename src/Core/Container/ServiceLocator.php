@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nqphp\Core\Container;
 
 use LogicException;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -15,6 +16,7 @@ use ReflectionParameter;
  *
  * Resolves services by class name or by user-bound aliases.
  * Supports singleton (default) and prototype scopes.
+ * Implements PSR-11 ContainerInterface.
  *
  * Example:
  *
@@ -27,7 +29,7 @@ use ReflectionParameter;
  *   $logger = $locator->make(LoggerInterface::class);
  *   $cache  = $locator->make(CachePool::class);
  */
-class ServiceLocator
+class ServiceLocator implements ContainerInterface
 {
     /** @var array<string, class-string> alias → concrete class */
     private array $bindings = [];
@@ -129,6 +131,30 @@ class ServiceLocator
 
         /** @var T $instance */
         return $instance;
+    }
+
+    /**
+     * PSR-11 compliant entry retrieval.
+     *
+     * @param string $id Identifier of the entry to look for.
+     * @return mixed Entry.
+     * @throws NotFoundException No entry was found for **this** identifier.
+     * @throws ContainerException Error while retrieving the entry.
+     */
+    public function get(string $id): mixed
+    {
+        if (!$this->has($id)) {
+            throw new NotFoundException("No entry found for identifier \"{$id}\".");
+        }
+
+        try {
+            return $this->make($id);
+        } catch (\Throwable $e) {
+            if ($e instanceof NotFoundException) {
+                throw $e;
+            }
+            throw new ContainerException("Error while retrieving identifier \"{$id}\": {$e->getMessage()}", 0, $e);
+        }
     }
 
     /**
