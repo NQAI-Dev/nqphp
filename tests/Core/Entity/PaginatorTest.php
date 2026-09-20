@@ -100,4 +100,21 @@ class PaginatorTest extends TestCase
         $this->assertSame(0, $paginator->count());
         $this->assertSame([], $paginator->getItems());
     }
+
+    public function testMapTransformsItemsAndPreservesPaginationMetadata(): void
+    {
+        $items = [
+            ['id' => 1, 'name' => 'Alice'],
+            ['id' => 2, 'name' => 'Bob'],
+        ];
+
+        $paginator = new Paginator($items, 10, 1, 2);
+        $mapped = $paginator->map(fn (array $item) => strtoupper($item['name']));
+
+        $this->assertSame(['ALICE', 'BOB'], $mapped->getItems());
+        $this->assertSame(10, $mapped->getTotalItems());
+        $this->assertSame(1, $mapped->getCurrentPage());
+        $this->assertSame(2, $mapped->getPerPage());
+        $this->assertSame(5, $mapped->getLastPage());
+    }
 }

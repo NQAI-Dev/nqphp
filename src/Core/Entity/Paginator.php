@@ -115,6 +115,23 @@ class Paginator implements Countable, IteratorAggregate
     }
 
     /**
+     * Transform items using a callback and return a new Paginator instance.
+     *
+     * @template U
+     * @param callable(T): U $callback
+     * @return self<U>
+     */
+    public function map(callable $callback): self
+    {
+        return new self(
+            array_map($callback, $this->items),
+            $this->totalItems,
+            $this->currentPage,
+            $this->perPage
+        );
+    }
+
+    /**
      * Export pagination summary array for JSON / API responses.
      *
      * @return array{
