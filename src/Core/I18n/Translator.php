@@ -45,6 +45,29 @@ final class Translator implements TranslatorInterface
         return $this->interpolate($message, $parameters);
     }
 
+    public function transChoice(string $key, int $number, array $parameters = [], ?string $locale = null): string
+    {
+        $targetLocale = $locale ?? $this->locale;
+        $message = $this->lookup($key, $targetLocale);
+
+        if ($message === null && $targetLocale !== $this->fallbackLocale) {
+            $message = $this->lookup($key, $this->fallbackLocale);
+        }
+
+        if ($message === null) {
+            return $key;
+        }
+
+        $segments = array_map('trim', explode('|', $message));
+        $index = PluralizationRule::getIndex($number, $targetLocale);
+
+        $chosen = $segments[$index] ?? (end($segments) ?: $key);
+
+        $parameters['count'] = $number;
+
+        return $this->interpolate($chosen, $parameters);
+    }
+
     public function getLocale(): string
     {
         return $this->locale;

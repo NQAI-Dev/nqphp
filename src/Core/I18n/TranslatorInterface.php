@@ -35,4 +35,15 @@ interface TranslatorInterface
      * Check if a translation key exists for a locale.
      */
     public function has(string $key, ?string $locale = null): bool;
+
+    /**
+     * Translate a pluralized string key chosen by a numeric count.
+     * Segments separated by pipe '|'. Parameters automatically receive 'count'.
+     *
+     * @param string $key Dotted translation key
+     * @param int $number Number for pluralization
+     * @param array<string, mixed> $parameters Parameters to substitute
+     * @param string|null $locale Specific locale to translate to, or current locale if null
+     */
+    public function transChoice(string $key, int $number, array $parameters = [], ?string $locale = null): string;
 }

@@ -115,4 +115,34 @@ class TranslatorTest extends TestCase
         $this->assertTrue($translator->has('auth.failed'));
         $this->assertFalse($translator->has('unknown.phrase'));
     }
+
+    public function testTransChoiceEnglishPluralization(): void
+    {
+        file_put_contents($this->translationsDir . '/en/messages.php', '<?php return [
+            "apples" => "There is one apple|There are :count apples",
+        ];');
+
+        $translator = new Translator($this->translationsDir, 'en', 'en');
+
+        $this->assertSame('There is one apple', $translator->transChoice('messages.apples', 1));
+        $this->assertSame('There are 0 apples', $translator->transChoice('messages.apples', 0));
+        $this->assertSame('There are 5 apples', $translator->transChoice('messages.apples', 5));
+    }
+
+    public function testTransChoiceRussianPluralization(): void
+    {
+        file_put_contents($this->translationsDir . '/ru/messages.php', '<?php return [
+            "apples" => ":count яблоко|:count яблока|:count яблок",
+        ];');
+
+        $translator = new Translator($this->translationsDir, 'ru', 'en');
+
+        $this->assertSame('1 яблоко', $translator->transChoice('messages.apples', 1));
+        $this->assertSame('21 яблоко', $translator->transChoice('messages.apples', 21));
+        $this->assertSame('2 яблока', $translator->transChoice('messages.apples', 2));
+        $this->assertSame('24 яблока', $translator->transChoice('messages.apples', 24));
+        $this->assertSame('5 яблок', $translator->transChoice('messages.apples', 5));
+        $this->assertSame('11 яблок', $translator->transChoice('messages.apples', 11));
+        $this->assertSame('0 яблок', $translator->transChoice('messages.apples', 0));
+    }
 }
