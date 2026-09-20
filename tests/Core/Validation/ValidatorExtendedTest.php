@@ -307,4 +307,32 @@ final class ValidatorExtendedTest extends TestCase
         $this->assertArrayHasKey('mac', $e);
         $this->assertSame('The mac field must be a valid MAC address.', $e['mac'][0]);
     }
+
+    // ─── starts_with / ends_with ──────────────────────────────────────────────
+
+    public function testStartsWithValid(): void
+    {
+        $e = $this->v()->validate(['url' => 'https://example.com'], ['url' => 'starts_with:http://,https://']);
+        $this->assertSame([], $e);
+    }
+
+    public function testStartsWithInvalid(): void
+    {
+        $e = $this->v()->validate(['url' => 'ftp://example.com'], ['url' => 'starts_with:http://,https://']);
+        $this->assertArrayHasKey('url', $e);
+        $this->assertSame('The url field must start with one of: http://,https://.', $e['url'][0]);
+    }
+
+    public function testEndsWithValid(): void
+    {
+        $e = $this->v()->validate(['file' => 'document.pdf'], ['file' => 'ends_with:.pdf,.docx']);
+        $this->assertSame([], $e);
+    }
+
+    public function testEndsWithInvalid(): void
+    {
+        $e = $this->v()->validate(['file' => 'archive.zip'], ['file' => 'ends_with:.pdf,.docx']);
+        $this->assertArrayHasKey('file', $e);
+        $this->assertSame('The file field must end with one of: .pdf,.docx.', $e['file'][0]);
+    }
 }

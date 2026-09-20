@@ -180,6 +180,8 @@ class Validator
             'json'        => $this->ruleJson($field, $value),
             'ip'          => $this->ruleIp($field, $value),
             'mac'         => $this->ruleMac($field, $value),
+            'starts_with' => $this->ruleStartsWith($field, $value, $ruleParam),
+            'ends_with'   => $this->ruleEndsWith($field, $value, $ruleParam),
             default       => null,   // unknown rule — silently skip
         };
     }
@@ -373,6 +375,40 @@ class Validator
         if (!is_string($value) || filter_var($value, FILTER_VALIDATE_MAC) === false) {
             $this->addError($field, "The {$field} field must be a valid MAC address.");
         }
+    }
+
+    private function ruleStartsWith(string $field, mixed $value, string $param): void
+    {
+        if (!is_string($value)) {
+            $this->addError($field, "The {$field} field must start with one of: {$param}.");
+            return;
+        }
+
+        $prefixes = explode(',', $param);
+        foreach ($prefixes as $prefix) {
+            if (str_starts_with($value, $prefix)) {
+                return;
+            }
+        }
+
+        $this->addError($field, "The {$field} field must start with one of: {$param}.");
+    }
+
+    private function ruleEndsWith(string $field, mixed $value, string $param): void
+    {
+        if (!is_string($value)) {
+            $this->addError($field, "The {$field} field must end with one of: {$param}.");
+            return;
+        }
+
+        $suffixes = explode(',', $param);
+        foreach ($suffixes as $suffix) {
+            if (str_ends_with($value, $suffix)) {
+                return;
+            }
+        }
+
+        $this->addError($field, "The {$field} field must end with one of: {$param}.");
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
