@@ -66,6 +66,18 @@ class Validator
     }
 
     /**
+     * Inspect data against validation rules and return a typed ValidationResult object.
+     *
+     * @param array|object $data
+     * @param array<string, string> $rules
+     */
+    public function inspect(array|object $data, array $rules = []): ValidationResult
+    {
+        $errors = $this->validate($data, $rules);
+        return new ValidationResult($errors, $data);
+    }
+
+    /**
      * Validate data and throw ValidationException if errors exist.
      * Returns the validated data or object on success.
      *
