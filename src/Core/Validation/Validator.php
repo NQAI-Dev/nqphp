@@ -176,6 +176,9 @@ class Validator
             'date_format' => $this->ruleDateFormat($field, $value, $ruleParam),
             'same'        => $this->ruleSame($field, $value, $ruleParam, $data),
             'different'   => $this->ruleDifferent($field, $value, $ruleParam, $data),
+            'uuid'        => $this->ruleUuid($field, $value),
+            'json'        => $this->ruleJson($field, $value),
+            'ip'          => $this->ruleIp($field, $value),
             default       => null,   // unknown rule — silently skip
         };
     }
@@ -334,6 +337,33 @@ class Validator
     {
         if (array_key_exists($otherField, $data) && $value === $data[$otherField]) {
             $this->addError($field, "The {$field} field must be different from {$otherField}.");
+        }
+    }
+
+    private function ruleUuid(string $field, mixed $value): void
+    {
+        if (!is_string($value) || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value)) {
+            $this->addError($field, "The {$field} field must be a valid UUID.");
+        }
+    }
+
+    private function ruleJson(string $field, mixed $value): void
+    {
+        if (!is_string($value)) {
+            $this->addError($field, "The {$field} field must be a valid JSON string.");
+            return;
+        }
+
+        json_decode($value);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->addError($field, "The {$field} field must be a valid JSON string.");
+        }
+    }
+
+    private function ruleIp(string $field, mixed $value): void
+    {
+        if (!is_string($value) || filter_var($value, FILTER_VALIDATE_IP) === false) {
+            $this->addError($field, "The {$field} field must be a valid IP address.");
         }
     }
 

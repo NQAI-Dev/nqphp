@@ -247,4 +247,49 @@ final class ValidatorExtendedTest extends TestCase
         $v = $this->v();
         $this->assertTrue($v->fails(['email' => 'bad'], ['email' => 'email']));
     }
+
+    // ─── uuid ─────────────────────────────────────────────────────────────────
+
+    public function testUuidValid(): void
+    {
+        $e = $this->v()->validate(['id' => '123e4567-e89b-12d3-a456-426614174000'], ['id' => 'uuid']);
+        $this->assertSame([], $e);
+    }
+
+    public function testUuidInvalid(): void
+    {
+        $e = $this->v()->validate(['id' => 'not-a-valid-uuid'], ['id' => 'uuid']);
+        $this->assertArrayHasKey('id', $e);
+        $this->assertSame('The id field must be a valid UUID.', $e['id'][0]);
+    }
+
+    // ─── json ─────────────────────────────────────────────────────────────────
+
+    public function testJsonValid(): void
+    {
+        $e = $this->v()->validate(['meta' => '{"name":"Alice","age":30}'], ['meta' => 'json']);
+        $this->assertSame([], $e);
+    }
+
+    public function testJsonInvalid(): void
+    {
+        $e = $this->v()->validate(['meta' => '{broken:json}'], ['meta' => 'json']);
+        $this->assertArrayHasKey('meta', $e);
+        $this->assertSame('The meta field must be a valid JSON string.', $e['meta'][0]);
+    }
+
+    // ─── ip ───────────────────────────────────────────────────────────────────
+
+    public function testIpValid(): void
+    {
+        $e = $this->v()->validate(['ip_v4' => '192.168.1.1', 'ip_v6' => '::1'], ['ip_v4' => 'ip', 'ip_v6' => 'ip']);
+        $this->assertSame([], $e);
+    }
+
+    public function testIpInvalid(): void
+    {
+        $e = $this->v()->validate(['ip' => '999.999.999.999'], ['ip' => 'ip']);
+        $this->assertArrayHasKey('ip', $e);
+        $this->assertSame('The ip field must be a valid IP address.', $e['ip'][0]);
+    }
 }
