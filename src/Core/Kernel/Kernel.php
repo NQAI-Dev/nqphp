@@ -564,7 +564,6 @@ final class Kernel implements HttpKernelInterface
             $ref = new ReflectionClass($instance);
             if ($ref->hasProperty('kernel')) {
                 $kernelProp = $ref->getProperty('kernel');
-                $kernelProp->setAccessible(true);
                 $kernelProp->setValue($instance, $this);
             }
         }

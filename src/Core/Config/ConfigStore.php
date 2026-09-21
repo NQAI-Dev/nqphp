@@ -51,7 +51,6 @@ final class ConfigStore
         foreach ($reflection->getProperties() as $prop) {
             $rawKey = $this->camelToSnake($prop->getName());
             if (\array_key_exists($rawKey, $raw)) {
-                $prop->setAccessible(true);
                 $prop->setValue($instance, $raw[$rawKey]);
             }
         }

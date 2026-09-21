@@ -40,7 +40,6 @@ final class MigrationTest extends TestCase
     {
         $migCode = '<?php
 use Nqphp\Core\Migration\AbstractMigration;
-use PDO;
 
 class Migration_2026_01_create_posts_table extends AbstractMigration
 {

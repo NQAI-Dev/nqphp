@@ -40,7 +40,6 @@ final class EntityManager
         $data = [];
         foreach ($mapping as $propertyName => $metadata) {
             $property = $reflection->getProperty($propertyName);
-            $property->setAccessible(true);
             if (!$property->isInitialized($entity)) {
                 continue;
             }
@@ -53,7 +52,6 @@ final class EntityManager
 
         $id = $this->driver->persist($entityName, $data);
         $idProperty = $this->idPropertyFor($reflection);
-        $idProperty->setAccessible(true);
         $idProperty->setValue($entity, $id);
 
         return $entity;
@@ -69,7 +67,6 @@ final class EntityManager
         $entityName = $this->entityNameFor($entity);
         $reflection = new ReflectionClass($entity);
         $idProperty = $this->idPropertyFor($reflection);
-        $idProperty->setAccessible(true);
         $id = $idProperty->getValue($entity);
         if ($id === null) {
             throw new \RuntimeException(sprintf(
@@ -224,7 +221,6 @@ final class EntityManager
                 continue;
             }
             $property = $class->getProperty($propertyName);
-            $property->setAccessible(true);
             $property->setValue($entity, $this->fromStorageValue($row[$metadata['name']], $metadata['type']));
         }
         return $entity;

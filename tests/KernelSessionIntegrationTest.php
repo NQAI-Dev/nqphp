@@ -8,6 +8,7 @@ use Nqphp\Core\Controller\AbstractController;
 use Nqphp\Core\Kernel\Kernel;
 use Nqphp\Core\Session\SessionInterface;
 use Nqphp\Core\Session\SessionManager;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,9 +42,7 @@ final class SessionControllerFixture extends AbstractController
 
 final class KernelSessionIntegrationTest extends TestCase
 {
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testKernelExposesSessionInstanceAndInterface(): void
     {
         $kernel = new Kernel(__DIR__ . '/..');
@@ -63,9 +62,7 @@ final class KernelSessionIntegrationTest extends TestCase
         $this->assertFalse($session->has('test_var'));
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testKernelAutowiresSessionInterfaceIntoControllerAction(): void
     {
         $kernel = new Kernel(__DIR__ . '/..');
@@ -80,9 +77,7 @@ final class KernelSessionIntegrationTest extends TestCase
         $this->assertSame('injected:ok', $response->getContent());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testAbstractControllerSessionHelperWorksDuringDispatch(): void
     {
         $kernel = new Kernel(__DIR__ . '/..');
@@ -97,9 +92,7 @@ final class KernelSessionIntegrationTest extends TestCase
         $this->assertSame('val:fixture_val', $response->getContent());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testAbstractControllerFlashHelpers(): void
     {
         $kernel = new Kernel(__DIR__ . '/..');

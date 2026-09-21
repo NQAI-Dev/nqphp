@@ -29,7 +29,6 @@ final class ConfigStoreTest extends TestCase
         // a public property reflection assignment.
         $raw = new FeatureConfig([]);
         $propRef = (new \ReflectionClass($raw))->getProperty('configs');
-        $propRef->setAccessible(true);
         $propRef->setValue($raw, ['Hello' => [
             'cache_ttl' => 120,
             'rate_limit' => 200,
@@ -79,7 +78,6 @@ PHP);
     {
         $raw = new FeatureConfig([]);
         $propRef = (new \ReflectionClass($raw))->getProperty('configs');
-        $propRef->setAccessible(true);
         $propRef->setValue($raw, ['Hello' => []]);  // empty config
 
         $tmp = sys_get_temp_dir() . '/nqphp-cfg-defaults-' . uniqid();

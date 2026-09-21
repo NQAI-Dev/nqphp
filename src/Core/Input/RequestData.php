@@ -66,7 +66,6 @@ final class RequestData
         foreach ($reflection->getProperties() as $prop) {
             $rawKey = $this->camelToSnake($prop->getName());
             if (\array_key_exists($rawKey, $merged)) {
-                $prop->setAccessible(true);
                 $prop->setValue($instance, $merged[$rawKey]);
             }
         }

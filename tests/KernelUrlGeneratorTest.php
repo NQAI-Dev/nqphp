@@ -27,7 +27,6 @@ final class KernelUrlGeneratorTest extends TestCase
         $router = $kernel->router;
         $routerClass = new \ReflectionClass($router);
         $routesProp = $routerClass->getProperty('routes');
-        $routesProp->setAccessible(true);
         $collection = $routesProp->getValue($router);
         // Inject a single named route for the test
         $route = new \Symfony\Component\Routing\Route(
@@ -49,7 +48,6 @@ final class KernelUrlGeneratorTest extends TestCase
         $router = $kernel->router;
         $routerClass = new \ReflectionClass($router);
         $routesProp = $routerClass->getProperty('routes');
-        $routesProp->setAccessible(true);
         $collection = $routesProp->getValue($router);
         $route = new \Symfony\Component\Routing\Route('/health', ['_controller' => 'X::y']);
         $collection->add('health:check', $route);
@@ -65,7 +63,6 @@ final class KernelUrlGeneratorTest extends TestCase
         $router = $kernel->router;
         $routerClass = new \ReflectionClass($router);
         $routesProp = $routerClass->getProperty('routes');
-        $routesProp->setAccessible(true);
         $collection = $routesProp->getValue($router);
         $route = new \Symfony\Component\Routing\Route('/about', ['_controller' => 'X::y']);
         $collection->add('about:page', $route);

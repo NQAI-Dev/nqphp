@@ -24,7 +24,6 @@ final class SqliteDriverWiringTest extends TestCase
         // Drive via reflection to inspect the runtime type.
         $ref = new \ReflectionClass($kernel);
         $driverProp = $ref->getProperty('driver');
-        $driverProp->setAccessible(true);
         self::assertInstanceOf(DriverInterface::class, $driverProp->getValue($kernel));
         // In CI (no env var override) we default to SqliteDriver with :memory:
         $driver = $driverProp->getValue($kernel);
@@ -38,7 +37,6 @@ final class SqliteDriverWiringTest extends TestCase
             $kernel = new Kernel(self::PROJECT_DIR);
             $ref = new \ReflectionClass($kernel);
             $driverProp = $ref->getProperty('driver');
-            $driverProp->setAccessible(true);
             self::assertInstanceOf(InMemoryDriver::class, $driverProp->getValue($kernel));
         } finally {
             unset($_SERVER['NQPHP_DRIVER']);
@@ -51,13 +49,10 @@ final class SqliteDriverWiringTest extends TestCase
         $ref = new \ReflectionClass($kernel);
         $driverProp = $ref->getProperty('driver');
         $emProp = $ref->getProperty('entityManager');
-        $driverProp->setAccessible(true);
-        $emProp->setAccessible(true);
 
         $em = $emProp->getValue($kernel);
         $refEm = new \ReflectionClass($em);
         $emDriverProp = $refEm->getProperty('driver');
-        $emDriverProp->setAccessible(true);
         self::assertSame($driverProp->getValue($kernel), $emDriverProp->getValue($em));
     }
 }

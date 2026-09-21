@@ -71,7 +71,6 @@ final class RateLimitMiddlewareTest extends TestCase
 
         // Force expiry by manipulating the cache manually (mocking time passage)
         $ref = new \ReflectionProperty(ArrayCache::class, 'entries');
-        $ref->setAccessible(true);
         $entries = $ref->getValue($cache);
         $entries['rate_limit:192.168.1.2']['expires'] = time() - 10;
         $ref->setValue($cache, $entries);

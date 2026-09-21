@@ -73,7 +73,6 @@ final class ArrayCacheTest extends TestCase
 
         // Simulate passage of time past the TTL boundary.
         $ref = new \ReflectionProperty(ArrayCache::class, 'entries');
-        $ref->setAccessible(true);
         $entries = $ref->getValue($cache);
         $entries['ephemeral']['expires'] = time() - 1;
         $ref->setValue($cache, $entries);
@@ -110,7 +109,6 @@ final class ArrayCacheTest extends TestCase
         $cache->set('forever', 42, null);
 
         $ref = new \ReflectionProperty(ArrayCache::class, 'entries');
-        $ref->setAccessible(true);
         $entries = $ref->getValue($cache);
 
         self::assertNull($entries['forever']['expires']);

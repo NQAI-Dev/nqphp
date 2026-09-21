@@ -50,7 +50,6 @@ class KernelAutowiringCoreServicesTest extends TestCase
         $reflectionMethod = new \ReflectionMethod($controller, 'autowireAction');
         $kernelReflection = new \ReflectionClass($kernel);
         $resolveMethod = $kernelReflection->getMethod('resolveArgs');
-        $resolveMethod->setAccessible(true);
 
         $args = $resolveMethod->invoke($kernel, $reflectionMethod, [], $request);
 

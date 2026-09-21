@@ -78,7 +78,6 @@ class MigrateCommandsTest extends TestCase
 declare(strict_types=1);
 
 use Nqphp\Core\Migration\AbstractMigration;
-use PDO;
 
 final class Migration_2026_09_20_000001_create_posts_table extends AbstractMigration
 {

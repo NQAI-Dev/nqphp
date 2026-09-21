@@ -95,7 +95,6 @@ PHP);
         // only.)
         $kernel = new Kernel(__DIR__ . '/..');
         $reflectedSd = (new \ReflectionClass($kernel))->getProperty('serviceDiscoverer');
-        $reflectedSd->setAccessible(true);
         $sd = $reflectedSd->getValue($kernel);
         // Swap the dirs — re-assign the readonly property
         $reflectedSd->setValue($kernel, new ServiceDiscoverer([$dir]));
