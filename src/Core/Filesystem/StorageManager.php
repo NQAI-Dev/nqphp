@@ -34,4 +34,34 @@ final class StorageManager
         }
         return $this->disks[$target];
     }
+
+    public function hasDisk(string $name): bool
+    {
+        return isset($this->disks[$name]);
+    }
+
+    public function unmount(string $name): self
+    {
+        unset($this->disks[$name]);
+        return $this;
+    }
+
+    public function getDefaultDisk(): string
+    {
+        return $this->defaultDisk;
+    }
+
+    public function setDefaultDisk(string $defaultDisk): self
+    {
+        $this->defaultDisk = $defaultDisk;
+        return $this;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getDisks(): array
+    {
+        return array_keys($this->disks);
+    }
 }
