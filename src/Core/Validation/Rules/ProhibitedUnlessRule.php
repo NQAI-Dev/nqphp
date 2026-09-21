@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Validation\Rules;
 
-use Nqphp\Core\Validation\RuleInterface;
+use Nqphp\Core\Validation\ImplicitRuleInterface;
 
 /**
  * Validates that the field is prohibited (empty or null) unless another field equals any of the specified values.
  */
-class ProhibitedUnlessRule implements RuleInterface
+class ProhibitedUnlessRule implements ImplicitRuleInterface
 {
     /**
      * @param string $otherField The name of the field to check condition against

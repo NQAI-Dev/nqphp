@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Validation\Rules;
 
-use Nqphp\Core\Validation\RuleInterface;
+use Nqphp\Core\Validation\ImplicitRuleInterface;
 
 /**
  * Validates that the field is prohibited (must be empty, null, or not present in the dataset).
  */
-class ProhibitedRule implements RuleInterface
+class ProhibitedRule implements ImplicitRuleInterface
 {
     /**
      * @param ?string $customMessage

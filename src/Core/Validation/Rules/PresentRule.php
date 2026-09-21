@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Validation\Rules;
 
-use Nqphp\Core\Validation\RuleInterface;
+use Nqphp\Core\Validation\ImplicitRuleInterface;
 
 /**
  * Validates that the field must be present in the input data, even if it is null or empty.
  */
-class PresentRule implements RuleInterface
+class PresentRule implements ImplicitRuleInterface
 {
     /**
      * @param array<string, mixed> $data Complete input dataset
