@@ -35,6 +35,7 @@ use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
@@ -525,6 +526,9 @@ final class Kernel implements HttpKernelInterface
             $params = $matcher->match($request->getPathInfo());
         } catch (ResourceNotFoundException $e) {
             return $this->respond($request, new Response('Not Found', 404));
+        } catch (MethodNotAllowedException $e) {
+            $headers = $e->getAllowedMethods() !== [] ? ['Allow' => implode(', ', $e->getAllowedMethods())] : [];
+            return $this->respond($request, new Response('Method Not Allowed', 405, $headers));
         }
 
         // BeforeRoute hooks: invoked after route match, before

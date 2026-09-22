@@ -240,14 +240,34 @@ final class KernelPipelineTest extends TestCase
         self::assertSame(500, $response->getStatusCode());
     }
 
+    public function testMethodMismatchReturns405WithAllowHeader(): void
+    {
+        $this->addRoute(
+            $this->kernel,
+            'pipeline:post-only',
+            '/_test/post-only',
+            KernelPipelineFixtureController::class . '::ok',
+            methods: ['POST'],
+        );
+
+        $response = $this->kernel->handle(
+            Request::create('/_test/post-only', 'GET', server: ['HTTP_ACCEPT' => 'text/plain'])
+        );
+
+        self::assertSame(405, $response->getStatusCode());
+        self::assertSame('Method Not Allowed', $response->getContent());
+        self::assertSame('POST', $response->headers->get('Allow'));
+    }
+
     /**
      * @param array<string,mixed> $defaults
+     * @param list<string> $methods
      */
-    private function addRoute(Kernel $kernel, string $name, string $path, string $controller, array $defaults = []): void
+    private function addRoute(Kernel $kernel, string $name, string $path, string $controller, array $defaults = [], array $methods = []): void
     {
         $defaults['_controller'] = $controller;
         $reflection = new \ReflectionClass($kernel->router);
         $routes = $reflection->getProperty('routes')->getValue($kernel->router);
-        $routes->add($name, new Route($path, $defaults));
+        $routes->add($name, new Route($path, $defaults, methods: $methods));
     }
 }
