@@ -29,7 +29,7 @@ class NotInArrayRule implements RuleInterface
     public function message(string $field): string
     {
         $disallowedStr = implode(', ', array_map(
-            static fn($val) => is_scalar($val) ? (string) $val : gettype($val),
+            static fn ($val) => is_scalar($val) ? (string) $val : gettype($val),
             $this->disallowed
         ));
 

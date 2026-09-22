@@ -20,7 +20,7 @@ class LoggingHttpClientTest extends TestCase
             new Response('OK', 200),
         ]);
 
-        $logger = new class extends AbstractLogger {
+        $logger = new class () extends AbstractLogger {
             /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
             public array $logs = [];
 
@@ -51,7 +51,7 @@ class LoggingHttpClientTest extends TestCase
             new Response('Not Found', 404),
         ]);
 
-        $logger = new class extends AbstractLogger {
+        $logger = new class () extends AbstractLogger {
             /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
             public array $logs = [];
 
@@ -82,7 +82,7 @@ class LoggingHttpClientTest extends TestCase
             },
         ]);
 
-        $logger = new class extends AbstractLogger {
+        $logger = new class () extends AbstractLogger {
             /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
             public array $logs = [];
 

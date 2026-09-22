@@ -48,14 +48,16 @@ class CircuitBreakerHttpClientTest extends TestCase
 
         try {
             $cb->get('https://api.example.com/failing');
-        } catch (RuntimeException) {}
+        } catch (RuntimeException) {
+        }
 
         $this->assertSame(CircuitState::Closed, $cb->getState());
         $this->assertSame(1, $cb->getFailureCount());
 
         try {
             $cb->get('https://api.example.com/failing');
-        } catch (RuntimeException) {}
+        } catch (RuntimeException) {
+        }
 
         $this->assertSame(CircuitState::Open, $cb->getState());
         $this->assertSame(2, $cb->getFailureCount());
@@ -78,7 +80,8 @@ class CircuitBreakerHttpClientTest extends TestCase
 
         try {
             $cb->get('https://api.example.com/fail');
-        } catch (RuntimeException) {}
+        } catch (RuntimeException) {
+        }
 
         $this->assertSame(CircuitState::Open, $cb->getState());
 

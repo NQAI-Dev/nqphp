@@ -19,7 +19,7 @@ class HeaderAppendingHttpClientTest extends TestCase
                 $this->assertSame('secret-token', $options['headers']['X-Api-Key'] ?? null);
                 $this->assertSame('application/json', $options['headers']['Accept'] ?? null);
                 return new Response('ok', 200);
-            }
+            },
         ]);
 
         $client = new HeaderAppendingHttpClient($mock, [
@@ -40,7 +40,7 @@ class HeaderAppendingHttpClientTest extends TestCase
                 $this->assertArrayNotHasKey('User-Agent', $options['headers']);
                 $this->assertSame('secret-token', $options['headers']['X-Api-Key'] ?? null);
                 return new Response('ok', 200);
-            }
+            },
         ]);
 
         $client = new HeaderAppendingHttpClient($mock, [

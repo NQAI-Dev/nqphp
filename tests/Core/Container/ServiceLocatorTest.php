@@ -13,7 +13,10 @@ use PHPUnit\Framework\TestCase;
 final class NoDepsService
 {
     public string $id;
-    public function __construct() { $this->id = uniqid('svc_', true); }
+    public function __construct()
+    {
+        $this->id = uniqid('svc_', true);
+    }
 }
 
 interface GreeterInterface
@@ -23,38 +26,48 @@ interface GreeterInterface
 
 final class HelloGreeter implements GreeterInterface
 {
-    public function greet(): string { return 'hello'; }
+    public function greet(): string
+    {
+        return 'hello';
+    }
 }
 
 final class WithDepService
 {
     public function __construct(
         public readonly NoDepsService $dep,
-    ) {}
+    ) {
+    }
 }
 
 final class DeepDepService
 {
     public function __construct(
         public readonly WithDepService $mid,
-    ) {}
+    ) {
+    }
 }
 
 final class OptionalDepService
 {
     public function __construct(
         public readonly ?NoDepsService $dep = null,
-    ) {}
+    ) {
+    }
 }
 
 // Circular A → B → A
 final class CircularA
 {
-    public function __construct(CircularB $b) {}
+    public function __construct(CircularB $b)
+    {
+    }
 }
 final class CircularB
 {
-    public function __construct(CircularA $a) {}
+    public function __construct(CircularA $a)
+    {
+    }
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

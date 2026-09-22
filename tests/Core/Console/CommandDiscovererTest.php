@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests\Core\Console;
 
-use Nqphp\Core\Attribute\AsCommand;
 use Nqphp\Core\Console\CommandDiscoverer;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 class CommandDiscovererTest extends TestCase
 {
@@ -35,7 +31,9 @@ class CommandDiscovererTest extends TestCase
     public function testDiscoverCommands(): void
     {
         $file1 = $this->tempDir . '/TestCommand.php';
-        file_put_contents($file1, <<<'PHP'
+        file_put_contents(
+            $file1,
+            <<<'PHP'
 <?php
 
 namespace Nqphp\Tests\Core\Console\Fixtures;
@@ -51,7 +49,9 @@ PHP
         );
 
         $file2 = $this->tempDir . '/IgnoredClass.php';
-        file_put_contents($file2, <<<'PHP'
+        file_put_contents(
+            $file2,
+            <<<'PHP'
 <?php
 
 namespace Nqphp\Tests\Core\Console\Fixtures;

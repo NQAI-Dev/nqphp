@@ -12,13 +12,13 @@ class CssResponseTest extends TestCase
 {
     public function testExtendsSymfonyResponse(): void
     {
-        $response = new CssResponse("body { margin: 0; }");
+        $response = new CssResponse('body { margin: 0; }');
         $this->assertInstanceOf(Response::class, $response);
     }
 
     public function testDefaultHeadersAndContent(): void
     {
-        $css = "body { background: #000; color: #fff; }";
+        $css = 'body { background: #000; color: #fff; }';
         $response = new CssResponse($css);
 
         $this->assertSame(200, $response->getStatusCode());
@@ -29,7 +29,7 @@ class CssResponseTest extends TestCase
     public function testCustomStatusAndHeaders(): void
     {
         $response = new CssResponse(
-            ":root { --brand: #00f; }",
+            ':root { --brand: #00f; }',
             201,
             ['X-Theme' => 'dark']
         );
@@ -37,6 +37,6 @@ class CssResponseTest extends TestCase
         $this->assertSame(201, $response->getStatusCode());
         $this->assertSame('text/css; charset=UTF-8', $response->headers->get('Content-Type'));
         $this->assertSame('dark', $response->headers->get('X-Theme'));
-        $this->assertSame(":root { --brand: #00f; }", $response->getContent());
+        $this->assertSame(':root { --brand: #00f; }', $response->getContent());
     }
 }

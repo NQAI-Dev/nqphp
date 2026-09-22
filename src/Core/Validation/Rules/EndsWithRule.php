@@ -46,7 +46,7 @@ class EndsWithRule implements RuleInterface
         }
 
         $suffixes = is_array($this->suffixes) ? $this->suffixes : [$this->suffixes];
-        $expected = implode(', ', array_map(fn($s) => "'{$s}'", $suffixes));
+        $expected = implode(', ', array_map(fn ($s) => "'{$s}'", $suffixes));
 
         return "Значение поля {$field} должно заканчиваться одним из суффиксов: {$expected}.";
     }

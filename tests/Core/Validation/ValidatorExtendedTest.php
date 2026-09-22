@@ -9,7 +9,10 @@ use PHPUnit\Framework\TestCase;
 
 final class ValidatorExtendedTest extends TestCase
 {
-    private function v(): Validator { return new Validator(); }
+    private function v(): Validator
+    {
+        return new Validator();
+    }
 
     // ─── url ──────────────────────────────────────────────────────────────────
 

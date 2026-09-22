@@ -33,7 +33,8 @@ class DebugEventsCommandTest extends TestCase
         $subscriber = new DummySubscriber();
 
         $dispatcher->listen(CustomDummyEvent::class, [$subscriber, 'handle'], 10);
-        $dispatcher->listen(CustomDummyEvent::class, function (CustomDummyEvent $event): void {}, 0);
+        $dispatcher->listen(CustomDummyEvent::class, function (CustomDummyEvent $event): void {
+        }, 0);
         $dispatcher->listen(AnotherCustomEvent::class, fn () => null);
 
         $command = new DebugEventsCommand($dispatcher);

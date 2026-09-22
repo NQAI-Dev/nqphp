@@ -247,4 +247,3 @@ final class QueryBuilder
         return Paginator::paginate($this, $page, $perPage);
     }
 }
-

@@ -30,9 +30,18 @@ final class OrderedSubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function runFirst(SampleEvent $e): void  { $e->trace[] = 'first';  }
-    public function runSecond(SampleEvent $e): void { $e->trace[] = 'second'; }
-    public function runThird(SampleEvent $e): void  { $e->trace[] = 'third';  }
+    public function runFirst(SampleEvent $e): void
+    {
+        $e->trace[] = 'first';
+    }
+    public function runSecond(SampleEvent $e): void
+    {
+        $e->trace[] = 'second';
+    }
+    public function runThird(SampleEvent $e): void
+    {
+        $e->trace[] = 'third';
+    }
 }
 
 final class StopPropagationSubscriber implements EventSubscriberInterface
@@ -73,9 +82,9 @@ final class EventDispatcherTest extends TestCase
         $dispatcher = new EventDispatcher();
         $event = new SampleEvent();
 
-        $dispatcher->listen(SampleEvent::class, fn (SampleEvent $e) => ($e->trace[] = 'low'),  0);
+        $dispatcher->listen(SampleEvent::class, fn (SampleEvent $e) => ($e->trace[] = 'low'), 0);
         $dispatcher->listen(SampleEvent::class, fn (SampleEvent $e) => ($e->trace[] = 'high'), 10);
-        $dispatcher->listen(SampleEvent::class, fn (SampleEvent $e) => ($e->trace[] = 'mid'),  5);
+        $dispatcher->listen(SampleEvent::class, fn (SampleEvent $e) => ($e->trace[] = 'mid'), 5);
 
         $dispatcher->dispatch($event);
 
@@ -98,13 +107,16 @@ final class EventDispatcherTest extends TestCase
         $dispatcher = new EventDispatcher();
         $event = new SampleEvent();
 
-        $subscriber = new class implements EventSubscriberInterface {
+        $subscriber = new class () implements EventSubscriberInterface {
             public array $calls = [];
             public static function getSubscribedEvents(): array
             {
                 return [SampleEvent::class => 'handle'];
             }
-            public function handle(SampleEvent $e): void { $e->trace[] = 'subscriber-string-spec'; }
+            public function handle(SampleEvent $e): void
+            {
+                $e->trace[] = 'subscriber-string-spec';
+            }
         };
 
         $dispatcher->addSubscriber($subscriber);

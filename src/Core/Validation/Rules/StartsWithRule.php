@@ -46,7 +46,7 @@ class StartsWithRule implements RuleInterface
         }
 
         $prefixes = is_array($this->prefixes) ? $this->prefixes : [$this->prefixes];
-        $expected = implode(', ', array_map(fn($p) => "'{$p}'", $prefixes));
+        $expected = implode(', ', array_map(fn ($p) => "'{$p}'", $prefixes));
 
         return "Значение поля {$field} должно начинаться с одного из префиксов: {$expected}.";
     }

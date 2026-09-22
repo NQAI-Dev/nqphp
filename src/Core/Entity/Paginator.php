@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nqphp\Core\Entity;
 
+use ArrayIterator;
 use Countable;
 use IteratorAggregate;
 use Traversable;
-use ArrayIterator;
 
 /**
  * Paginator representing a slice of data with total counts and navigation metadata.

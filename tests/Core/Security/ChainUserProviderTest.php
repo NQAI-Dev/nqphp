@@ -7,7 +7,6 @@ namespace Nqphp\Tests\Core\Security;
 use Nqphp\Core\Security\ChainUserProvider;
 use Nqphp\Core\Security\InMemoryUserProvider;
 use Nqphp\Core\Security\User;
-use Nqphp\Core\Security\UserInterface;
 use Nqphp\Core\Security\UserNotFoundException;
 use PHPUnit\Framework\TestCase;
 

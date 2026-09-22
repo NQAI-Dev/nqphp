@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests\Core\Event;
 
-use Nqphp\Core\Event\EventListener;
 use Nqphp\Core\Event\KernelExceptionEvent;
 use Nqphp\Core\Kernel\Kernel;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +37,7 @@ class KernelExceptionEventTest extends TestCase
             }
         });
 
-        $kernel->pipe(new class implements \Nqphp\Core\Middleware\MiddlewareInterface {
+        $kernel->pipe(new class () implements \Nqphp\Core\Middleware\MiddlewareInterface {
             public function process(Request $request, callable $next): Response
             {
                 throw new RuntimeException('Database unreachable');
@@ -55,7 +54,7 @@ class KernelExceptionEventTest extends TestCase
     {
         $kernel = new Kernel($this->tempDir);
 
-        $kernel->pipe(new class implements \Nqphp\Core\Middleware\MiddlewareInterface {
+        $kernel->pipe(new class () implements \Nqphp\Core\Middleware\MiddlewareInterface {
             public function process(Request $request, callable $next): Response
             {
                 throw new RuntimeException('Fatal blow');

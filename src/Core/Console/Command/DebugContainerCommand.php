@@ -6,7 +6,6 @@ namespace Nqphp\Core\Console\Command;
 
 use Nqphp\Core\Container\ServiceLocator;
 use ReflectionClass;
-use ReflectionProperty;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests\Core\Security;
 
-use InvalidArgumentException;
 use Nqphp\Core\Security\InMemoryUserProvider;
 use Nqphp\Core\Security\User;
 use Nqphp\Core\Security\UserInterface;

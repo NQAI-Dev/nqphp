@@ -41,7 +41,8 @@ class StreamedResponseTest extends TestCase
 
     public function testSseFactorySetsHeaders(): void
     {
-        $response = StreamedResponse::sse(function () {});
+        $response = StreamedResponse::sse(function () {
+        });
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('text/event-stream', $response->headers->get('Content-Type'));
@@ -53,7 +54,8 @@ class StreamedResponseTest extends TestCase
 
     public function testSseFactoryAllowsCustomHeaders(): void
     {
-        $response = StreamedResponse::sse(function () {}, 200, ['X-Custom' => 'test']);
+        $response = StreamedResponse::sse(function () {
+        }, 200, ['X-Custom' => 'test']);
         $this->assertSame('test', $response->headers->get('X-Custom'));
     }
 

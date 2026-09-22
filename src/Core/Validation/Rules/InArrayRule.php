@@ -29,7 +29,7 @@ class InArrayRule implements RuleInterface
     public function message(string $field): string
     {
         $allowedStr = implode(', ', array_map(
-            static fn($val) => is_scalar($val) ? (string) $val : gettype($val),
+            static fn ($val) => is_scalar($val) ? (string) $val : gettype($val),
             $this->allowed
         ));
 

@@ -36,7 +36,7 @@ class TrailingSlashMiddlewareTest extends TestCase
         $middleware = new TrailingSlashMiddleware(308);
         $request = Request::create('https://example.com/posts/?page=2&sort=asc');
 
-        $next = fn() => new Response('OK');
+        $next = fn () => new Response('OK');
         $response = $middleware->process($request, $next);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);

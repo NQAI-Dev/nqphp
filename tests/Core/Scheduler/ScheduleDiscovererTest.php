@@ -33,7 +33,7 @@ class ScheduleDiscovererTest extends TestCase
         $discoverer = new ScheduleDiscoverer([$this->fixturesDir]);
         $schedules = $discoverer->discover()->all();
 
-        $minuteSchedule = array_values(array_filter($schedules, fn($s) => $s['name'] === 'test:every-minute'))[0];
+        $minuteSchedule = array_values(array_filter($schedules, fn ($s) => $s['name'] === 'test:every-minute'))[0];
 
         $this->assertSame('* * * * *', $minuteSchedule['cron']);
         $this->assertSame('Run every minute', $minuteSchedule['description']);
@@ -64,7 +64,7 @@ class ScheduleDiscovererTest extends TestCase
         $discoverer = new ScheduleDiscoverer([$this->fixturesDir]);
         $schedules = $discoverer->discover()->all();
 
-        $minuteSchedule = array_values(array_filter($schedules, fn($s) => $s['name'] === 'test:every-minute'))[0];
+        $minuteSchedule = array_values(array_filter($schedules, fn ($s) => $s['name'] === 'test:every-minute'))[0];
         [$class, $method] = $minuteSchedule['callable'];
 
         \Nqphp\Tests\Core\Scheduler\Fixtures\SampleScheduler::$callCount = 0;

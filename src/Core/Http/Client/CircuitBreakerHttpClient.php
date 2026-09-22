@@ -30,7 +30,8 @@ class CircuitBreakerHttpClient implements HttpClientInterface
         private readonly int $failureThreshold = 5,
         private readonly float $recoveryTimeSeconds = 30.0,
         private readonly int $halfOpenSuccessThreshold = 2,
-    ) {}
+    ) {
+    }
 
     public function getState(): CircuitState
     {

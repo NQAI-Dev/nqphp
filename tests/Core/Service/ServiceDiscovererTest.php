@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests\Core\Service;
 
-use Nqphp\Core\Attribute\Service as ServiceAttr;
 use Nqphp\Core\Service\ServiceDiscoverer;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +31,9 @@ class ServiceDiscovererTest extends TestCase
     public function testDiscoverServices(): void
     {
         $file1 = $this->tempDir . '/CustomService.php';
-        file_put_contents($file1, <<<'PHP'
+        file_put_contents(
+            $file1,
+            <<<'PHP'
 <?php
 
 namespace Nqphp\Tests\Core\Service\Fixtures;
@@ -47,7 +48,9 @@ PHP
         );
 
         $file2 = $this->tempDir . '/PlainClass.php';
-        file_put_contents($file2, <<<'PHP'
+        file_put_contents(
+            $file2,
+            <<<'PHP'
 <?php
 
 namespace Nqphp\Tests\Core\Service\Fixtures;

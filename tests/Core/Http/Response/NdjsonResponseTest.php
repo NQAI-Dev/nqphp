@@ -48,6 +48,6 @@ class NdjsonResponseTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Failed to encode NDJSON item');
 
-        new NdjsonResponse([["invalid" => "\xB1\x31"]]);
+        new NdjsonResponse([['invalid' => "\xB1\x31"]]);
     }
 }

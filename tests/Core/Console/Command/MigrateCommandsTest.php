@@ -7,7 +7,6 @@ namespace Nqphp\Tests\Core\Console\Command;
 use Nqphp\Core\Console\Command\MigrateCommand;
 use Nqphp\Core\Console\Command\MigrateRollbackCommand;
 use Nqphp\Core\Kernel\Kernel;
-use PDO;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;

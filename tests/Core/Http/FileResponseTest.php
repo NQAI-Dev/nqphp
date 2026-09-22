@@ -7,7 +7,6 @@ namespace Nqphp\Tests\Core\Http;
 use Nqphp\Core\Exception\HttpException;
 use Nqphp\Core\Http\FileResponse;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class FileResponseTest extends TestCase
 {

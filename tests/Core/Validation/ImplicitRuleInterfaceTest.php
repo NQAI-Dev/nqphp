@@ -7,7 +7,6 @@ namespace Nqphp\Tests\Core\Validation;
 use Nqphp\Core\Validation\ImplicitRuleInterface;
 use Nqphp\Core\Validation\RuleInterface;
 use Nqphp\Core\Validation\Rules\PresentRule;
-use Nqphp\Core\Validation\Rules\ProhibitedRule;
 use Nqphp\Core\Validation\Validator;
 use PHPUnit\Framework\TestCase;
 
@@ -47,7 +46,7 @@ class ImplicitRuleInterfaceTest extends TestCase
 
     public function testOrdinaryRuleIsSkippedWhenValueIsNull(): void
     {
-        $ordinaryRule = new class implements RuleInterface {
+        $ordinaryRule = new class () implements RuleInterface {
             public bool $executed = false;
 
             public function passes(mixed $value, string $field): bool
@@ -72,7 +71,7 @@ class ImplicitRuleInterfaceTest extends TestCase
 
     public function testImplicitRuleIsAlwaysExecutedEvenWhenValueIsNull(): void
     {
-        $implicitRule = new class implements ImplicitRuleInterface {
+        $implicitRule = new class () implements ImplicitRuleInterface {
             public bool $executed = false;
 
             public function passes(mixed $value, string $field): bool

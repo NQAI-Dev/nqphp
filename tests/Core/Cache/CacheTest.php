@@ -80,7 +80,7 @@ class CacheTest extends TestCase
     public function testRememberUsesNamedStore(): void
     {
         $manager = new Cache();
-        $manager->remember('item', null, fn() => 'stored', 'mystore');
+        $manager->remember('item', null, fn () => 'stored', 'mystore');
 
         $this->assertTrue($manager->cache('mystore')->has('item'));
         $this->assertSame('stored', $manager->cache('mystore')->get('item'));

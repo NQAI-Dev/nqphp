@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests\Core\Tag;
 
-use Nqphp\Core\Tag\AbstractTag;
-use Nqphp\Core\Tag\Div;
-use Nqphp\Core\Tag\Img;
-use Nqphp\Core\Tag\Input;
-use Nqphp\Core\Tag\RawHtml;
 use Nqphp\Core\Tag\Tag;
 use PHPUnit\Framework\TestCase;
 
