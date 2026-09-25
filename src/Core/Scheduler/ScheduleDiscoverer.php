@@ -53,6 +53,10 @@ final class ScheduleDiscoverer implements ScheduleDiscovererInterface
             }
             $this->scanDir($dir);
         }
+        usort(
+            $this->schedules,
+            static fn (array $left, array $right): int => $left['name'] <=> $right['name']
+        );
         return $this;
     }
 

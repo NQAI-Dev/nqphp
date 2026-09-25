@@ -99,4 +99,42 @@ PHP);
         rmdir($dir . '/Feature');
         rmdir($dir);
     }
+
+    public function testSchedulesAreSortedByName(): void
+    {
+        $dir = sys_get_temp_dir() . '/nqphp-schedule-test-' . uniqid();
+        mkdir($dir . '/Feature/Foo/Scheduler', 0755, true);
+
+        file_put_contents($dir . '/Feature/Foo/Scheduler/ScheduleZulu.php', <<<'PHP'
+<?php
+namespace App\Foo\Scheduler;
+use Nqphp\Core\Attribute\Schedule;
+final class ScheduleZulu
+{
+    #[Schedule(cron: '@daily', name: 'zulu')]
+    public static function run(): void {}
+}
+PHP);
+        file_put_contents($dir . '/Feature/Foo/Scheduler/ScheduleAlpha.php', <<<'PHP'
+<?php
+namespace App\Foo\Scheduler;
+use Nqphp\Core\Attribute\Schedule;
+final class ScheduleAlpha
+{
+    #[Schedule(cron: '@hourly', name: 'alpha')]
+    public static function run(): void {}
+}
+PHP);
+
+        $schedules = new ScheduleDiscoverer([$dir])->discover()->all();
+
+        self::assertSame(['alpha', 'zulu'], array_column($schedules, 'name'));
+
+        unlink($dir . '/Feature/Foo/Scheduler/ScheduleZulu.php');
+        unlink($dir . '/Feature/Foo/Scheduler/ScheduleAlpha.php');
+        rmdir($dir . '/Feature/Foo/Scheduler');
+        rmdir($dir . '/Feature/Foo');
+        rmdir($dir . '/Feature');
+        rmdir($dir);
+    }
 }
