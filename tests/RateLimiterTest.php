@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nqphp\Tests;
 
+use Nqphp\Core\Cache\ArrayCache;
+use Nqphp\Core\Http\RateLimit\CacheRateLimiter;
 use Nqphp\Core\Http\RateLimit\InMemoryRateLimiter;
 use Nqphp\Core\Middleware\RateLimiterMiddleware;
 use PHPUnit\Framework\TestCase;
@@ -12,6 +14,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class RateLimiterTest extends TestCase
 {
+    public function testCacheRateLimiterIgnoresMalformedCachedTimestamps(): void
+    {
+        $cache = new ArrayCache();
+        $cache->set('rate_limit:user_1', [time(), 'invalid', null], 120);
+        $limiter = new CacheRateLimiter($cache);
+
+        $result = $limiter->hit('user_1', 3, 60);
+
+        $this->assertTrue($result['allowed']);
+        $this->assertSame(1, $result['remaining']);
+    }
+
     public function testInMemoryRateLimiterHitsAndDecay(): void
     {
         $limiter = new InMemoryRateLimiter();
