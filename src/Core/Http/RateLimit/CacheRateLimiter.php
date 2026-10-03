@@ -35,7 +35,7 @@ class CacheRateLimiter implements RateLimiterInterface
         $cutoff = $now - $decaySeconds;
         $timestamps = array_values(array_filter(
             $timestamps,
-            static fn (mixed $ts): bool => is_int($ts) && $ts > $cutoff
+            static fn (mixed $ts): bool => is_int($ts) && $ts > $cutoff && $ts <= $now
         ));
 
         if (count($timestamps) >= $maxAttempts) {

@@ -17,7 +17,7 @@ final class RateLimiterTest extends TestCase
     public function testCacheRateLimiterIgnoresMalformedCachedTimestamps(): void
     {
         $cache = new ArrayCache();
-        $cache->set('rate_limit:user_1', [time(), 'invalid', null], 120);
+        $cache->set('rate_limit:user_1', [time(), 'invalid', null, time() + 3600], 120);
         $limiter = new CacheRateLimiter($cache);
 
         $result = $limiter->hit('user_1', 3, 60);
