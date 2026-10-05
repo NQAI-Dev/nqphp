@@ -11,12 +11,12 @@ use Symfony\Component\Finder\Finder;
  * Auto-discovers scheduled tasks from #[Schedule] attributes on
  * static methods across:
  *   - src/Feature/<Feature>/Scheduler/<File>.php   (project schedules)
- *   - src/Core/Scheduler/*.php        (framework schedules, future)
+ *   - src/Core/Scheduler/*.php        (framework schedules)
  *
  * Returns each task as a descriptor (name, cron, description, call
  * callable). The bin/console schedule:list command renders these
- * as a Symfony Console table; a future scheduler runner (Phase 2+)
- * will actually invoke them through Symfony Scheduler.
+ * as a Symfony Console table, and schedule:run evaluates cron expressions
+ * with dragonmantank/cron-expression before invoking due callables.
  *
  * Design: reflection-based, mirrors CommandDiscoverer's pattern
  * (which already shipped at 2be0a72). Both discoverers can co-exist

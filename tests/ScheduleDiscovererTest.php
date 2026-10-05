@@ -9,16 +9,16 @@ use Nqphp\Core\Scheduler\ScheduleDiscoverer;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Phase 2 #4: ScheduleDiscoverer test.
+ * ScheduleDiscoverer tests.
  *
  * Phase 1 of ScheduleDiscoverer only validates:
  *   - discovers classes with #[Schedule] attributes
  *   - returns descriptor rows (name, cron, description, callable)
  *   - honours explicit name attribute (or falls back to Class::method)
  *
- * Phase 2+ (TODO): integration with symfony/scheduler for actual
- * task invocation. That's a separate `bin/console schedule:run`
- * command, not in scope here.
+ * Schedule execution is covered separately in SchedulerCommandsTest;
+ * the current runner evaluates cron expressions directly with
+ * dragonmantank/cron-expression rather than Symfony Scheduler.
  */
 final class ScheduleDiscovererTest extends TestCase
 {

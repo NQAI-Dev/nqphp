@@ -22,7 +22,7 @@ What ships in this repo:
   around route dispatch
 * `src/Core/Console/` — Symfony Console wrapper + `CommandDiscoverer`
 * `src/Core/Middleware/` — auto-discovery + Kernel invocation
-* `src/Core/Scheduler/` — `#[Schedule]` attribute + Symfony Scheduler wiring
+* `src/Core/Scheduler/` — `#[Schedule]` discovery, listing, and CLI runner
 * `src/Core/Config/` — per-feature `config.php` reader + `Kernel::config()`
 * `src/Core/Js/` — JS-module runtime helper + per-feature `client.js`
   ES-module serving
@@ -59,8 +59,9 @@ What ships in this repo:
 
 * **Symfony components as building blocks.** `symfony/routing`,
   `symfony/http-kernel`, `symfony/console`, `symfony/dependency-injection`,
-  `symfony/scheduler`. Not `framework-bundle` — too opinionated. We
-  glue components together.
+  and `symfony/event-dispatcher`. Not `framework-bundle` — too opinionated.
+  We glue components together. The schedule runner currently evaluates
+  cron expressions with `dragonmantank/cron-expression` directly.
 
 * **Custom ORM, no Doctrine.** `#[Id]`, `#[Column]`, `#[Where]`,
   `EntityManager` (Symfony-style `findBy` / `findOneBy` / `count` /
@@ -358,8 +359,9 @@ DBAL-style portability, swap the `EntityManager` wiring for
   response; `#[EventListener]` attribute + `EventListenerDiscoverer`
   auto-subscribe listeners at boot (framework `/_nqphp/...` namespace
   excluded).
-* ✅ `#[Schedule]` cron + Symfony Scheduler integration — discover +
-  list + run via the real Symfony Scheduler evaluator.
+* ✅ `#[Schedule]` discovery and CLI execution — `schedule:list` previews
+  next runs; `schedule:run` evaluates `Cron\CronExpression::isDue()` and
+  invokes due callables. The current runner does not use Symfony Scheduler.
 * ✅ `bin/console schedule:list` + `schedule:run` — proper
   introspection table (NAME / CRON / NEXT RUN / DESCRIPTION) with
   `--raw` / `--timezone` flags, plus a runner that evaluates
